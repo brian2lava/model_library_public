@@ -1,0 +1,22 @@
+{
+	"ode": [
+		"dv/dt = -v/tau_v + u + bias_mant : volt (unless refractory)",
+		"du/dt = -u/tau_u : volt/second"
+	],
+	"latex": [
+		"\\frac{dv}{dt} = -v(t) \\cdot \\tau_v^{-1} + u(t) + b(t)",
+		"\\frac{du}{dt} = -u(t) \\cdot \\tau_u^{-1}"
+	],
+	"variables": [
+		{ "name": "v", "description": "voltage", "unit": "v" },
+		{ "name": "u", "description": "current (reduced)", "unit": "v/s" }
+	],
+	"parameters": [
+		{ "name": "tau_v", "description": "voltage decay" , "unit": "s"},
+		{ "name": "tau_u", "description": "current decay", "unit": "s" },
+		{ "name": "bias_mant", "description": "bias" , "unit": "v/s"}
+
+	],
+	"process_name": "LIF",
+	"ucode_extensions": {"file": ".dasm", "template": ".dasm.py.j2"}
+}

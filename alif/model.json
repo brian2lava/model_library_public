@@ -1,0 +1,18 @@
+
+{
+	"ode": [
+		"dv/dt = -v*tau_v*(1/ms) + u/ms + bias*(mV/ms) : volt (unless refractory)"
+	],
+	"latex": [
+		"\\frac{dv}{dt} = -v(t) \\cdot \\tau_v^{-1} + u(t) + b(t)"
+	],
+	"variables": [
+		{ "name": "v", "description": "voltage" }
+	],
+	"parameters": [
+		{ "name": "tau_v", "description": "voltage decay" },
+		{ "name": "tau_u", "description": "current decay" }
+	],
+	"process_name": "ALIF",
+	"ucode_extensions": {"file": ".dasm", "template": ".dasm.py.j2"}
+}
