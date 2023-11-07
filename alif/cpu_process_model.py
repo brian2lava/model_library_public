@@ -7,7 +7,7 @@ from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 
 from models.alif.alif_process import Process
-
+from brian2.utils.logger import get_logger
 
 @implements(proc=Process, protocol=LoihiProtocol)
 @requires(CPU)
@@ -37,7 +37,8 @@ class PyALifModelFloat(AbstractPyALifModelFloat):
 
 	def __init__(self, proc_params):
 		super(PyALifModelFloat, self).__init__(proc_params)
-        print(f"Process '{proc_params._parameters['name']}' initialized with PyLifModelFloat process model")
+        self.logger = get_logger('brian2.devices.lava')
+        self.logger.debug(f"Process '{proc_params._parameters['name']}' initialized with PyLifModelFloat process model")
 
 		# TODO update variables
 		# * remove bias

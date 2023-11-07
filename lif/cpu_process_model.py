@@ -6,6 +6,8 @@ from lava.magma.core.resources import CPU
 from lava.magma.core.decorator import implements, requires, tag
 from lava.magma.core.model.py.model import PyLoihiProcessModel
 
+from brian2.utils.logger import get_logger
+
 class AbstractPyLifModelFloat(PyLoihiProcessModel):
     """Abstract implementation of floating point precision
     leaky-integrate-and-fire neuron model.
@@ -223,7 +225,8 @@ class PyLifModelFloat(AbstractPyLifModelFloat):
 
     def __init__(self, proc_params):
         super(PyLifModelFloat, self).__init__(proc_params)
-        print(f"Process '{proc_params._parameters['name']}' initialized with PyLifModelFloat process model")
+        self.logger = get_logger('brian2.devices.lava')
+        self.logger.debug(f"Process '{proc_params._parameters['name']}' initialized with PyLifModelFloat process model")
 
     def spiking_activation(self):
         """Spiking activation function for LIF."""
@@ -260,7 +263,8 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
     def __init__(self, proc_params):
         super(PyLifModelBitAcc, self).__init__(proc_params)
         self.effective_vth = 0
-        print(f"Process '{proc_params._parameters['name']}' initialized with PyLifModelBitAcc process model")
+        self.logger = get_logger('brian2.devices.lava')
+        self.logger.debug(f"Process '{proc_params._parameters['name']}' initialized with PyLifModelBitAcc process model")
 
     def scale_threshold(self):
         """Scale threshold according to the way Loihi hardware scales it. In

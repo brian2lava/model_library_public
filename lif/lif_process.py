@@ -7,6 +7,7 @@ from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.magma.core.process.neuron import LearningNeuronProcess
 from brian2lava.utils.math import Float2Fixed
+from brian2.utils.logger import get_logger
 
 class AbstractLIF(AbstractProcess):
     """Abstract class for variables common to all neurons with leaky
@@ -38,6 +39,8 @@ class AbstractLIF(AbstractProcess):
             log_config=log_config,
             **kwargs,
         )
+        self.logger = get_logger('brian2.devices.lava')
+
         self.a_in = InPort(shape=shape)
         self.s_out = OutPort(shape=shape)
         self.u = Var(shape=shape, init=u)
@@ -150,5 +153,5 @@ class LIF(AbstractLIF):
              vth = {self.vth.init}
              vrs = {self.vrs.init}
              dt = {dt}"""
-        print(msg_var_par)
+        self.logger.debug(msg_var_par)
         
