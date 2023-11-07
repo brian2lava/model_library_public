@@ -223,7 +223,7 @@ class PyLifModelFloat(AbstractPyLifModelFloat):
 
     def __init__(self, proc_params):
         super(PyLifModelFloat, self).__init__(proc_params)
-        print("PyLifModelFloat initialized")
+        print(f"Process '{proc_params._parameters['name']}' initialized with PyLifModelFloat process model")
 
     def spiking_activation(self):
         """Spiking activation function for LIF."""
@@ -260,7 +260,7 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
     def __init__(self, proc_params):
         super(PyLifModelBitAcc, self).__init__(proc_params)
         self.effective_vth = 0
-        print("PyLifModelBitAcc initialized")
+        print(f"Process '{proc_params._parameters['name']}' initialized with PyLifModelBitAcc process model")
 
     def scale_threshold(self):
         """Scale threshold according to the way Loihi hardware scales it. In

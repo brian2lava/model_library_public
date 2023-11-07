@@ -37,8 +37,7 @@ class PyALifModelFloat(AbstractPyALifModelFloat):
 
 	def __init__(self, proc_params):
 		super(PyALifModelFloat, self).__init__(proc_params)
-		
-		print("PyLifModelFloat initialized")
+        print(f"Process '{proc_params._parameters['name']}' initialized with PyLifModelFloat process model")
 
 		# TODO update variables
 		# * remove bias

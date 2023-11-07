@@ -8,7 +8,6 @@ from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.magma.core.process.neuron import LearningNeuronProcess
 from brian2lava.utils.math import Float2Fixed
 
-
 class AbstractLIF(AbstractProcess):
     """Abstract class for variables common to all neurons with leaky
     integrator dynamics."""
@@ -39,7 +38,6 @@ class AbstractLIF(AbstractProcess):
             log_config=log_config,
             **kwargs,
         )
-
         self.a_in = InPort(shape=shape)
         self.s_out = OutPort(shape=shape)
         self.u = Var(shape=shape, init=u)
@@ -123,20 +121,34 @@ class LIF(AbstractLIF):
             log_config=log_config,
             **kwargs,
         )
-
+        # Set threshold and reset voltage
         self.vth = Var(shape=(1,), init=vth)
         self.vrs = Var(shape=(1,), init=vrs)
-        print(f"Process variables and parameters:\n" +
-              f"u = {u}, v = {v}\n"  +
-              f"tau_u = {tau_u}, tau_v = {tau_v}\n" +
-              f"vth = {vth}, vrs = {vrs}\n" +
-              f"dt = {dt}")
-        
-        # TODO: This is not very clean, but if we're using a fixed point implementation
-        # make sure that du and dv are ints (this introduces another source of error, but for now let's make it work)
-        if kwargs.get("float2fixed",False):
+        msg_var_par = f"Initialized attributes in process '{self.name}'"
+
+        # Scale and convert given values to fixed-point representation
+        if kwargs.get("float2fixed"):
+            # TODO Later do these conversions here (now they're done in other places)
+            #self.vth.init = Float2Fixed.float_to_fixed(vth)
+            #self.vrs.init = Float2Fixed.float_to_fixed(vrs)
+            # Compute decay constants
             self.du.init = Float2Fixed.float_to_fixed(dt/tau_u)
             self.dv.init = Float2Fixed.float_to_fixed(dt/tau_v)
+            msg_var_par += " (with Float2Fixed conversion)"
+        # Just use the given values and convert to integer
         else:
-            self.du.init = dt/tau_u
-            self.dv.init = dt/tau_v
+            # Compute decay constants
+            self.du.init = int(dt/tau_u)
+            self.dv.init = int(dt/tau_v)
+            
+        # Print the values
+        msg_var_par = f"""{msg_var_par}:
+             u = {u}, v = {v}
+             tau_u = {tau_u}, tau_v = {tau_v}
+             du = {self.du.init}, dv = {self.dv.init}
+             bias_mant = {self.bias_mant.init}, bias_exp = {self.bias_exp.init}
+             vth = {self.vth.init}
+             vrs = {self.vrs.init}
+             dt = {dt}"""
+        print(msg_var_par)
+        
