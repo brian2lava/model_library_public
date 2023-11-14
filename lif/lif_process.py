@@ -6,7 +6,6 @@ from lava.magma.core.process.process import LogConfig, AbstractProcess
 from lava.magma.core.process.variable import Var
 from lava.magma.core.process.ports.ports import InPort, OutPort
 from lava.magma.core.process.neuron import LearningNeuronProcess
-from brian2lava.utils.math import Float2Fixed
 from brian2.utils.logger import get_logger
 
 class AbstractLIF(AbstractProcess):
@@ -127,22 +126,7 @@ class LIF(AbstractLIF):
         # Set threshold and reset voltage
         self.vth = Var(shape=(1,), init=vth)
         self.vrs = Var(shape=(1,), init=vrs)
-        msg_var_par = f"Initialized attributes in process '{self.name}'"
-
-        # Scale and convert given values to fixed-point representation
-        if kwargs.get("float2fixed"):
-            # TODO Later do these conversions here (now they're done in other places)
-            #self.vth.init = Float2Fixed.float_to_fixed(vth)
-            #self.vrs.init = Float2Fixed.float_to_fixed(vrs)
-            # Compute decay constants
-            self.du.init = Float2Fixed.float_to_fixed(dt/tau_u)
-            self.dv.init = Float2Fixed.float_to_fixed(dt/tau_v)
-            msg_var_par += " (with Float2Fixed conversion)"
-        # Just use the given values and convert to integer
-        else:
-            # Compute decay constants
-            self.du.init = int(dt/tau_u)
-            self.dv.init = int(dt/tau_v)
+        msg_var_par = f"Initialized attributes in process '{self.name}'
             
         # Print the values
         msg_var_par = f"""{msg_var_par}:
