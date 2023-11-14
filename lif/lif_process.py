@@ -126,7 +126,7 @@ class LIF(AbstractLIF):
         # Set threshold and reset voltage
         self.vth = Var(shape=(1,), init=vth)
         self.vrs = Var(shape=(1,), init=vrs)
-        msg_var_par = f"Initialized attributes in process '{self.name}'
+        msg_var_par = f"Initialized attributes in process '{self.name}'"
             
         # Print the values
         msg_var_par = f"""{msg_var_par}:
