@@ -1,6 +1,6 @@
 {
 	"ode": [
-		"dv/dt = -v/tau_v + u + bias_mant : volt (unless refractory)",
+		"dv/dt = -v/tau_v + u + bias : volt (unless refractory)",
 		"du/dt = -u/tau_u : volt/second"
 	],
 	"latex": [
@@ -9,12 +9,12 @@
 	],
 	"variables": [
 		{ "name": "v", "description": "voltage", "unit": "v" },
-		{ "name": "u", "description": "current (reduced)", "unit": "v/s" }
+		{ "name": "u", "description": "current (red.)", "unit": "v/s" }
 	],
 	"parameters": [
 		{ "name": "tau_v", "description": "voltage decay" , "unit": "s"},
 		{ "name": "tau_u", "description": "current decay", "unit": "s" },
-		{ "name": "bias_mant", "description": "bias" , "unit": "v/s"}
+		{ "name": "bias", "description": "bias current (red.)" , "unit": "v/s"}
 
 	],
 	"process_name": "LIF",
