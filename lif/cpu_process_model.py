@@ -97,7 +97,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         self.decay_shift = 12
         self.decay_unity = 2**self.decay_shift
         # Threshold and incoming activation are MSB-aligned using 6-bits
-        self.vth_shift = 6
+        self.vth_shift = 0# 6
         self.act_shift = 6
 
     def scale_bias(self):

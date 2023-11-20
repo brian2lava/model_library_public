@@ -20,5 +20,5 @@
 
 	],
 	"process_name": "LIF",
-	"ucode_extensions": {"file": ".dasm", "template": ".dasm.py.j2"}
+	"ucode_extensions": {"file": ".dasm", "template": "----"}
 }
