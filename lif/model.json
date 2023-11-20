@@ -14,7 +14,9 @@
 	"parameters": [
 		{ "name": "tau_v", "description": "voltage decay" , "unit": "s"},
 		{ "name": "tau_u", "description": "current decay", "unit": "s" },
-		{ "name": "bias", "description": "bias current (red.)" , "unit": "v/s"}
+		{ "name": "bias", "description": "bias current (red.)" , "unit": "v/s"},
+		{ "name": "v_th", "description": "threshold voltage", "unit": "v" },
+		{ "name": "v_rs", "description": "reset voltage", "unit": "v" }
 
 	],
 	"process_name": "LIF",
