@@ -1,22 +1,22 @@
 {
 	"ode": [
-		"dv/dt = -v/tau_v + u + bias : volt (unless refractory)",
-		"du/dt = -u/tau_u : volt/second"
+		"dj/dt = -j/tau_j : volt/second",
+		"dv/dt = -v/tau_v + j + bias : volt (unless refractory)"
 	],
 	"latex": [
-		"\\frac{dv}{dt} = -v(t) \\cdot \\tau_v^{-1} + u(t) + b(t)",
-		"\\frac{du}{dt} = -u(t) \\cdot \\tau_u^{-1}"
+		"\\frac{dj}{dt} = -j(t) \\cdot \\tau_j^{-1}",
+		"\\frac{dv}{dt} = -v(t) \\cdot \\tau_v^{-1} + j(t) + \\mathrm{bias}(t)"
 	],
 	"variables": [
-		{ "name": "v", "description": "voltage", "unit": "v" },
-		{ "name": "u", "description": "current (red.)", "unit": "v/s" }
+		{ "name": "j", "description": "current (red.)", "unit": "V/s" },
+		{ "name": "v", "description": "voltage", "unit": "V" }
 	],
 	"parameters": [
-		{ "name": "tau_v", "description": "voltage decay" , "unit": "s"},
-		{ "name": "tau_u", "description": "current decay", "unit": "s" },
-		{ "name": "bias", "description": "bias current (red.)" , "unit": "v/s"},
-		{ "name": "v_th", "description": "threshold voltage", "unit": "v" },
-		{ "name": "v_rs", "description": "reset voltage", "unit": "v" }
+		{ "name": "tau_j", "description": "current time constant", "unit": "s" },
+		{ "name": "tau_v", "description": "voltage time constant" , "unit": "s"},
+		{ "name": "bias", "description": "bias current (red.)" , "unit": "V/s"},
+		{ "name": "v_th", "description": "threshold voltage", "unit": "V" },
+		{ "name": "v_rs", "description": "reset voltage", "unit": "V" }
 
 	],
 	"process_name": "LIF",

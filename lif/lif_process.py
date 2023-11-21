@@ -16,10 +16,10 @@ class AbstractLIF(AbstractProcess):
         self,
         *,
         shape: ty.Tuple[int, ...],
-        u: ty.Union[float, list, np.ndarray],
+        j: ty.Union[float, list, np.ndarray],
         v: ty.Union[float, list, np.ndarray],
-        du: float,
-        dv: float,
+        delta_j: float,
+        delta_v: float,
         bias_mant: ty.Union[float, list, np.ndarray],
         bias_exp: ty.Union[float, list, np.ndarray],
         name: str,
@@ -28,10 +28,10 @@ class AbstractLIF(AbstractProcess):
     ) -> None:
         super().__init__(
             shape=shape,
-            u=u,
+            j=j,
             v=v,
-            du=du,
-            dv=dv,
+            delta_j=delta_j,
+            delta_v=delta_v,
             bias_mant=bias_mant,
             bias_exp=bias_exp,
             name=name,
@@ -42,10 +42,10 @@ class AbstractLIF(AbstractProcess):
 
         self.a_in = InPort(shape=shape)
         self.s_out = OutPort(shape=shape)
-        self.u = Var(shape=shape, init=u)
+        self.j = Var(shape=shape, init=j)
         self.v = Var(shape=shape, init=v)
-        self.du = Var(shape=(1,), init=du)
-        self.dv = Var(shape=(1,), init=dv)
+        self.delta_j = Var(shape=(1,), init=delta_j)
+        self.delta_v = Var(shape=(1,), init=delta_v)
         self.bias_exp = Var(shape=shape, init=bias_exp)
         self.bias_mant = Var(shape=shape, init=bias_mant)
 
@@ -54,23 +54,23 @@ class LIF(AbstractLIF):
     """Leaky-Integrate-and-Fire (LIF) neural Process.
 
     LIF dynamics abstracts to:
-    u[t] = u[t-1] * (1-du) + a_in         # neuron current
-    v[t] = v[t-1] * (1-dv) + u[t] + bias  # neuron voltage
-    s_out = v[t] > vth                    # spike if threshold is exceeded
-    v[t] = 0                              # reset at spike
+    j[t] = j[t-1] * (1-delta_j) + a_in         # neuron current
+    v[t] = v[t-1] * (1-delta_v) + j[t] + bias  # neuron voltage
+    s_out = v[t] > vth                         # spike if threshold is exceeded
+    v[t] = 0                                   # reset at spike
 
     Parameters
     ----------
     shape : tuple(int)
         Number and topology of LIF neurons.
-    u : float, list, numpy.ndarray, optional
+    j : float, list, numpy.ndarray, optional
         Initial value of the neurons' current.
     v : float, list, numpy.ndarray, optional
         Initial value of the neurons' voltage (membrane potential).
-    du : float, optional
+    delta_j : float, optional
         Inverse of decay time-constant for current decay. Currently, only a
         single decay can be set for the entire population of neurons.
-    dv : float, optional
+    delta_v : float, optional
         Inverse of decay time-constant for voltage decay. Currently, only a
         single decay can be set for the entire population of neurons.
     bias_mant : float, list, numpy.ndarray, optional
@@ -87,7 +87,7 @@ class LIF(AbstractLIF):
 
     Example
     -------
-    >>> lif = LIF(shape=(200, 15), du=10, dv=5)
+    >>> lif = LIF(shape=(200, 15), delta_j=10, delta_v=5)
     This will create 200x15 LIF neurons that all have the same current decay
     of 10 and voltage decay of 5.
     """
@@ -96,27 +96,27 @@ class LIF(AbstractLIF):
         self,
         *,
         shape: ty.Tuple[int, ...],
-        u: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+        j: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
         v: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-        du: ty.Optional[float] = 0,
-        dv: ty.Optional[float] = 0,
+        delta_j: ty.Optional[float] = 0,
+        delta_v: ty.Optional[float] = 0,
         bias_mant: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
         bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
         vth: ty.Optional[float] = 100,
         vrs: ty.Optional[float] = 0,
         name: ty.Optional[str] = None,
         log_config: ty.Optional[LogConfig] = None,
+        tau_j: ty.Optional[float] = 0,
         tau_v: ty.Optional[float] = 0,
-        tau_u: ty.Optional[float] = 0,
         dt: ty.Optional[float] = 0,
         **kwargs,
     ) -> None:
         super().__init__(
             shape=shape,
-            u=u,
+            j=j,
             v=v,
-            du=du,
-            dv=dv,
+            delta_j=delta_j,
+            delta_v=delta_v,
             bias_mant=bias_mant,
             bias_exp=bias_exp,
             name=name,
@@ -130,9 +130,9 @@ class LIF(AbstractLIF):
             
         # Print the values
         msg_var_par = f"""{msg_var_par}:
-             u = {u}, v = {v}
-             tau_u = {tau_u}, tau_v = {tau_v}
-             du = {self.du.init}, dv = {self.dv.init}
+             j = {j}, v = {v}
+             tau_j = {tau_j}, tau_v = {tau_v}
+             delta_j = {self.delta_j.init}, delta_v = {self.delta_v.init}
              bias_mant = {self.bias_mant.init}, bias_exp = {self.bias_exp.init}
              vth = {self.vth.init}
              vrs = {self.vrs.init}

@@ -17,13 +17,13 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
 
     a_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
     s_out = None  # This will be an OutPort of different LavaPyTypes
-    u: np.ndarray = LavaPyType(np.ndarray, float)
+    j: np.ndarray = LavaPyType(np.ndarray, float)
     v: np.ndarray = LavaPyType(np.ndarray, float)
     vrs: float = LavaPyType(float, float)
     bias_mant: np.ndarray = LavaPyType(np.ndarray, float)
     bias_exp: np.ndarray = LavaPyType(np.ndarray, float)
-    du: float = LavaPyType(float, float)
-    dv: float = LavaPyType(float, float)
+    delta_j: float = LavaPyType(float, float)
+    delta_v: float = LavaPyType(float, float)
 
     def spiking_activation(self):
         """Abstract method to define the activation function that determines
@@ -38,9 +38,8 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
         """Common sub-threshold dynamics of current and voltage variables for
         all LIF models. This is where the 'leaky integration' happens.
         """
-        self.u[:] = self.u * (1 - self.du)
-        self.u[:] += activation_in
-        self.v[:] = self.v * (1 - self.dv) + self.u + self.bias_mant
+        self.j[:] = self.j * (1 - self.delta_j) + activation_in
+        self.v[:] = self.v * (1 - self.delta_v) + self.j + self.bias_mant
 
     def reset_voltage(self, spike_vector: np.ndarray):
         """Voltage reset behaviour. This can differ for different neuron
@@ -69,36 +68,40 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
 
     a_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int16, precision=16)
     s_out: None  # This will be an OutPort of different LavaPyTypes
-    u: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
+    j: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     v: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     vrs: int = LavaPyType(int, np.int32, precision=17)
-    du: int = LavaPyType(int, np.uint16, precision=12)
-    dv: int = LavaPyType(int, np.uint16, precision=12)
+    delta_j: int = LavaPyType(int, np.uint16, precision=12)
+    delta_v: int = LavaPyType(int, np.uint16, precision=12)
     bias_mant: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=13)
     bias_exp: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=3)
 
     def __init__(self, proc_params):
         super(AbstractPyLifModelFixed, self).__init__(proc_params)
         # ds_offset and dm_offset are 1-bit registers in Loihi 1, which are
-        # added to du and dv variables to compute effective decay constants
+        # added to delta_j and delta_v variables to compute effective decay constants
         # for current and voltage, respectively. They enable setting decay
         # constant values to exact 4096 = 2**12. Without them, the range of
-        # 12-bit unsigned du and dv is 0 to 4095.
+        # 12-bit unsigned delta_j and delta_v is 0 to 4095.
         self.ds_offset = 1
         self.dm_offset = 0
         self.isbiasscaled = False
         self.isthrscaled = False
         self.effective_bias = 0
         # Let's define some bit-widths from Loihi
-        # State variables u and v are 24-bits wide
-        self.uv_bitwidth = 24
-        self.max_uv_val = 2 ** (self.uv_bitwidth - 1)
+        # State variables j and v are 24-bits wide
+        self.jv_bitwidth = 24
+        self.max_jv_val = 2 ** (self.jv_bitwidth - 1)
         # Decays need an MSB alignment with 12-bits
         self.decay_shift = 12
         self.decay_unity = 2**self.decay_shift
-        # Threshold and incoming activation are MSB-aligned using 6-bits
-        self.vth_shift = 0# 6
-        self.act_shift = 6
+        # Threshold and reset voltage are MSB-aligned by 6 bits
+        # --> already done by Brian2Lava!
+        #self.vth_unity = 2**6
+        self.vth_unity = 2**0
+        #self.vrs_unity = 2**0
+        # Incoming activation is MSB-aligned by 6 bits
+        self.act_unity = 2**6
 
     def scale_bias(self):
         """Scale bias with bias exponent by taking into account sign of the
@@ -112,7 +115,6 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
             np.left_shift(bias_mant, self.bias_exp),
             np.right_shift(bias_mant, -self.bias_exp),
         )
-        self.isbiasscaled = True
 
     def scale_threshold(self):
         """Placeholder method for scaling threshold(s)."""
@@ -132,52 +134,49 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         """Common sub-threshold dynamics of current and voltage variables for
         all LIF models. This is where the 'leaky integration' happens.
         """
-
         # Update current
         # --------------
-        decay_const_u = self.du + self.ds_offset
-        # Below, u is promoted to int64 to avoid overflow of the product
-        # between u and decay constant beyond int32. Subsequent right shift by
+        # Compute decay constant (left shift via multiplication by `decay_unity`
+        # --> already done by Brian2Lava!)
+        #decay_const_j = self.delta_j*self.decay_unity + self.ds_offset
+        decay_const_j = self.delta_j + self.ds_offset
+        # Below, j is promoted to int64 to avoid overflow of the product
+        # between j and decay term beyond int32. Subsequent right shift by
         # 12 brings us back within 24-bits (and hence, within 32-bits)
-        decayed_curr = np.int64(self.u) * (self.decay_unity - decay_const_u)
-        decayed_curr = np.sign(decayed_curr) * np.right_shift(
-            np.abs(decayed_curr), self.decay_shift
-            
+        j_decayed = np.int64(self.j * (self.decay_unity - decay_const_j))
+        j_decayed = np.sign(j_decayed) * np.right_shift(
+        	np.abs(j_decayed), self.decay_shift
         )
-        decayed_curr = np.int32(decayed_curr)
         # Hardware left-shifts synaptic input for MSB alignment
-        activation_in = np.left_shift(activation_in, self.act_shift)
-        # Add synptic input to decayed current
-        decayed_curr += activation_in
+        activation_in = activation_in * self.act_unity
+        # Add synaptic input to decayed current
+        j_updated = np.int32(j_decayed + activation_in)
         # Check if value of current is within bounds of 24-bit. Overflows are
         # handled by wrapping around modulo 2 ** 23. E.g., (2 ** 23) + k
         # becomes k and -(2**23 + k) becomes -k
         wrapped_curr = np.where(
-            decayed_curr > self.max_uv_val,
-            decayed_curr - 2 * self.max_uv_val,
-            decayed_curr,
+        	j_updated > self.max_jv_val,
+        	j_updated - 2 * self.max_jv_val,
+        	j_updated,
         )
         wrapped_curr = np.where(
-            wrapped_curr <= -self.max_uv_val,
-            decayed_curr + 2 * self.max_uv_val,
-            wrapped_curr,
+        	wrapped_curr <= -self.max_jv_val,
+        	j_updated + 2 * self.max_jv_val,
+        	wrapped_curr,
         )
-        self.u[:] = wrapped_curr
-        # Update voltage
-        # --------------
-        decay_const_v = self.dv + self.dm_offset
+        self.j[:] = wrapped_curr
 
-        neg_voltage_limit = -np.int32(self.max_uv_val) + 1
-        pos_voltage_limit = np.int32(self.max_uv_val) - 1
-        # Decaying voltage similar to current. See the comment above to
-        # understand the need for each of the operations below.
-        decayed_volt = np.int64(self.v) * (self.decay_unity - decay_const_v)
-        decayed_volt = np.sign(decayed_volt) * np.right_shift(
-            np.abs(decayed_volt), self.decay_shift
+        # Update voltage (decay similar to current)
+        # -----------------------------------------
+        decay_const_v = self.delta_v + self.dm_offset
+        neg_voltage_limit = -np.int32(self.max_jv_val) + 1
+        pos_voltage_limit = np.int32(self.max_jv_val) - 1
+        v_decayed = np.int64(self.v * (self.decay_unity - decay_const_v))
+        v_decayed = np.sign(v_decayed) * np.right_shift(
+        	np.abs(v_decayed), self.decay_shift
         )
-        decayed_volt = np.int32(decayed_volt)
-        updated_volt = decayed_volt + self.u + self.effective_bias
-        self.v[:] = np.clip(updated_volt, neg_voltage_limit, pos_voltage_limit)
+        v_updated = np.int32(v_decayed + self.j + self.effective_bias)
+        self.v[:] = np.clip(v_updated, neg_voltage_limit, pos_voltage_limit)
 
     def reset_voltage(self, spike_vector: np.ndarray):
         """Voltage reset behaviour. This can differ for different neuron
@@ -193,13 +192,13 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         # Receive synaptic input
         a_in_data = self.a_in.recv()
 
+        # Compute effective bias
         self.scale_bias()
-        # # Compute effective bias and threshold only once, not every time-step
-        # if not self.isbiasscaled:
-        #     self.scale_bias()
 
+        # Compute scaled threshold-related variables only once, not every time-step
+        # (has to be done once after object construction)
         if not self.isthrscaled:
-            self.scale_threshold()
+        	self.scale_threshold()
 
         self.subthr_dynamics(activation_in=a_in_data)
 
@@ -248,8 +247,8 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
 
     Precisions of state variables
 
-    - du: unsigned 12-bit integer (0 to 4095)
-    - dv: unsigned 12-bit integer (0 to 4095)
+    - delta_j: unsigned 12-bit integer (0 to 4095)
+    - delta_v: unsigned 12-bit integer (0 to 4095)
     - bias_mant: signed 13-bit integer (-4096 to 4095). Mantissa part of neuron
       bias.
     - bias_exp: unsigned 3-bit integer (0 to 7). Exponent part of neuron bias.
@@ -271,7 +270,7 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
         Loihi hardware, threshold is left-shifted by 6-bits to MSB-align it
         with other state variables of higher precision.
         """
-        self.effective_vth = np.left_shift(self.vth, self.vth_shift)
+        self.effective_vth = np.int32(self.vth * self.vth_unity) # multiplication equaling left shift
         self.isthrscaled = True
 
     def spiking_activation(self):
