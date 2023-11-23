@@ -3,9 +3,15 @@
 		"dj/dt = -j/tau_j : volt/second",
 		"dv/dt = -v/tau_v + j + bias : volt (unless refractory)"
 	],
+	"conditions": {
+		"th" : "v > v_th",
+		"rs" : "v = v_rs"
+	},
 	"latex": [
 		"\\frac{dj}{dt} = -j(t) \\cdot \\tau_j^{-1}",
-		"\\frac{dv}{dt} = -v(t) \\cdot \\tau_v^{-1} + j(t) + \\mathrm{bias}(t)"
+		"\\frac{dv}{dt} = -v(t) \\cdot \\tau_v^{-1} + j(t) + \\mathrm{bias}(t)",
+		"\\mathrm{threshold} : v(t) > v_\\mathrm{th}",
+		"\\mathrm{reset} : v(t) = v_\\mathrm{rs}"
 	],
 	"variables": [
 		{ "name": "j", "description": "current (red.)", "unit": "V/s" },
