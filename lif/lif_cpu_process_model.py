@@ -93,6 +93,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         self.jv_bitwidth = 24
         self.max_jv_val = 2 ** (self.jv_bitwidth - 1)
         # Decays need an MSB alignment with 12-bits
+		# --> already done by Brian2Lava!
         self.decay_shift = 12
         self.decay_unity = 2**self.decay_shift
         # Threshold and reset voltage are MSB-aligned by 6 bits

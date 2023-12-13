@@ -1,0 +1,43 @@
+{
+	"ode": [
+		"dj/dt = -j/tau_j : volt/second",
+		"dv/dt = -v/tau_v + j + bias : volt",
+		"dtheta/dt = (theta_0-theta)/tau_theta : volt",
+		"dr/dt = -r/tau_r : volt"
+	
+	],
+	"conditions": {
+		"th" : "v-r > theta",
+		"rs" : [ 
+			"r = r + 2*theta",
+			"theta = theta + theta_step"
+		]
+	},
+	"latex": [
+		"\\frac{dj}{dt} = (-j(t) + j_\\mathrm{p o s t}(t)) \\cdot \\tau_j^{-1}",
+		"\\frac{dv}{dt} = -v(t) \\cdot \\tau_v^{-1} + j(t)+ \\mathrm{bias}(t)",
+		"\\frac{d\\theta}{dt} = (\\theta_0-\\theta(t)) \\cdot \\tau_\\theta^{-1} + \\theta_\\mathrm{p o s t}(t)",
+		"\\frac{dr}{dt} = -r(t) \\cdot \\tau_r^{-1} + r_\\mathrm{p o s t}(t)",
+		"\\mathrm{threshold} : v(t) > \\theta(t)",
+		"\\mathrm{reset} : r(t) \\rightarrow r(t) + 2\\cdot\\theta(t),\\quad\\theta(t) \\rightarrow \\theta(t) + \\theta_\\mathrm{step}"
+	],
+	"variables": [
+		{ "name": "j", "description": "current (red.)", "unit": "V/s" },
+		{ "name": "v", "description": "voltage", "unit": "V" },
+		{ "name": "theta", "description": "spiking threshold", "unit": "V" },
+		{ "name": "r", "description": "refractory variable", "unit": "V" }
+	],
+	"parameters": [
+		{ "name": "tau_j", "description": "current time constant", "unit": "s" },
+		{ "name": "tau_v", "description": "voltage time constant" , "unit": "s"},
+		{ "name": "tau_theta", "description": "threshold time constant" , "unit": "s"},
+		{ "name": "tau_r", "description": "refractory variable time constant" , "unit": "s"},
+		{ "name": "theta_0", "description": "initial/baseline value of threshold" , "unit": "V"},
+		{ "name": "theta_step", "description": "threshold increase after spike" , "unit": "V"},
+		{ "name": "bias", "description": "bias current (red.)" , "unit": "V/s"}
+		
+
+	],
+	"process_name": "ATRLIF",
+	"ucode_extensions": {"file": ".dasm", "template": "----"}
+}
