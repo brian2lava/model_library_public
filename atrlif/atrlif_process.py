@@ -127,7 +127,7 @@ class ATRLIF(AbstractProcess):
 		# Bias
 		self.bias_mant = Var(shape=shape, init=bias_mant)
 		self.bias_exp = Var(shape=shape, init=bias_exp)
-		print(f"bias_mant = {bias_mant}, bias_exp = {bias_exp}")
+		#print(f"bias_mant = {bias_mant}, bias_exp = {bias_exp}")
 
 		# Variables
 		self.j = Var(shape=shape, init=j)
