@@ -8,7 +8,7 @@
 		"rs" : "v = v_rs"
 	},
 	"latex": [
-		"\\frac{dj}{dt} = (-j(t) + j_\\mathrm{p o s t}(t)) \\cdot \\tau_j^{-1}",
+		"\\frac{dj}{dt} = -(j(t) + w\\cdot\\sum_i \\delta(t - t_{\\mathrm{spike},i})) + \\cdot \\tau_j^{-1}",
 		"\\frac{dv}{dt} = -v(t) \\cdot \\tau_v^{-1} + j(t) + \\mathrm{bias}(t)",
 		"\\mathrm{threshold} : v(t) > v_\\mathrm{th}",
 		"\\mathrm{reset} : v(t) = v_\\mathrm{rs}"
@@ -22,7 +22,8 @@
 		{ "name": "tau_v", "description": "voltage time constant" , "unit": "s"},
 		{ "name": "bias", "description": "bias current (red.)" , "unit": "V/s"},
 		{ "name": "v_th", "description": "threshold voltage", "unit": "V" },
-		{ "name": "v_rs", "description": "reset voltage", "unit": "V" }
+		{ "name": "v_rs", "description": "reset voltage", "unit": "V" },
+		{ "name": "w", "description": "synaptic weight", "unit": "V/s" }
 
 	],
 	"process_name": "LIF",

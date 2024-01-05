@@ -14,10 +14,10 @@
 		]
 	},
 	"latex": [
-		"\\frac{dj}{dt} = (-j(t) + j_\\mathrm{p o s t}(t)) \\cdot \\tau_j^{-1}",
+		"\\frac{dj}{dt} = -(j(t) + w\\cdot\\sum_i \\delta(t - t_{\\mathrm{spike},i})) \\cdot \\tau_j^{-1}",
 		"\\frac{dv}{dt} = -v(t) \\cdot \\tau_v^{-1} + j(t)+ \\mathrm{bias}(t)",
-		"\\frac{d\\theta}{dt} = (\\theta_0 - \\theta(t) + \\theta_\\mathrm{p o s t}(t)) \\cdot \\tau_\\theta^{-1}",
-		"\\frac{dr}{dt} = (-r(t) + r_\\mathrm{p o s t}(t)) \\cdot \\tau_r^{-1}",
+		"\\frac{d\\theta}{dt} = \\theta_0 - \\theta(t) \\cdot \\tau_\\theta^{-1}",
+		"\\frac{dr}{dt} = -r(t) \\cdot \\tau_r^{-1}",
 		"\\mathrm{threshold} : v(t) - r(t) > \\theta(t)",
 		"\\mathrm{reset} : r(t) \\rightarrow r(t) + 2\\cdot\\theta(t),\\quad\\theta(t) \\rightarrow \\theta(t) + \\theta_\\mathrm{step}"
 	],
@@ -34,7 +34,8 @@
 		{ "name": "tau_r", "description": "refractory variable time constant" , "unit": "s"},
 		{ "name": "theta_0", "description": "initial/baseline value of threshold" , "unit": "V"},
 		{ "name": "theta_step", "description": "threshold increase after spike" , "unit": "V"},
-		{ "name": "bias", "description": "bias current (red.)" , "unit": "V/s"}
+		{ "name": "bias", "description": "bias current (red.)" , "unit": "V/s"},
+		{ "name": "w", "description": "synaptic weight", "unit": "V/s" }
 		
 
 	],
