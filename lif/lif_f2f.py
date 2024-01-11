@@ -69,7 +69,7 @@ class ModelScaler:
         return ModelScaler.max_scaling_params(variables)
     
     @staticmethod
-    def max_scaling_params(variables, loihi_specs):
+    def max_scaling_params(variables):
         """
         The scaling of each variable shouldn't surpass the largest values
         allowed on Loihi2. This is not foolproof, but should be a good choice.
