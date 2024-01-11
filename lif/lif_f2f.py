@@ -26,8 +26,8 @@ class ModelScaler:
     process_class = 'LIF'
     forward_ops = {
         'v' : lambda alpha_t,A: A,
-        'vrs': lambda alpha_t,A: A,
-        'vth': lambda alpha_t,A: A,
+        'v_rs': lambda alpha_t,A: A,
+        'v_th': lambda alpha_t,A: A,
         'dt': lambda alpha_t,A: alpha_t,
         'j': lambda alpha_t,A: A/alpha_t,
         'tau_v': lambda alpha_t,A: alpha_t,
@@ -81,7 +81,7 @@ class ModelScaler:
         overall_max_A = infty
         for varname, (var_min,var_max) in variables.values():
             max_val = LOIHI2_SPECS.Max_Voltage if varname!= 'w' else LOIHI2_SPECS.Max_Weights
-            if varname in ['v','vth','vrs']:
+            if varname in ['v','v_th','v_rs']:
                 max_A = (max_val-1)/var_max
             elif varname in ['j','bias']:
                 max_A = (max_val-1)*alpha_t/var_max
