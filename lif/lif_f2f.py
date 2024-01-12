@@ -43,7 +43,9 @@ class ModelScaler:
         integer range. This is model specific.
         """
         # take the min of each variable
-        dt,v,j,w,b = variables['dt'][0],variables['v'][0],variables['j'][0],variables['w'][0],variables['bias'][0]
+        dt,v,j,b = variables['dt'][0],variables['v'][0],variables['j'][0],variables['bias'][0]
+        # If this neuron doesn't have any synapses connected to it, w won't be defined.
+        w = variables['w'][0] if 'w' in variables else 0
         min_alpha_t = 1/dt
         # Avoid ZeroDivisionError
         params_to_max = []
@@ -73,13 +75,13 @@ class ModelScaler:
         """
         The scaling of each variable shouldn't surpass the largest values
         allowed on Loihi2. This is not foolproof, but should be a good choice.
-        In most cases we expect v_th to be the one that defines the value of A.
-        (The other parameters would have to be at least factor of 1/dt larger than v_th)
+        In most cases we expect vth to be the one that defines the value of A.
+        (The other parameters would have to be at least factor of 1/dt larger than vth)
         """
         from numpy import infty
         alpha_t = 1/variables['dt'][0]
         overall_max_A = infty
-        for varname, (var_min,var_max) in variables.values():
+        for varname, (var_min,var_max) in variables.items():
             # Avoid zero values
             if var_max == 0:
                 continue
@@ -91,8 +93,8 @@ class ModelScaler:
             elif varname == 'w':
                 max_A = (max_val-1)*alpha_t**2/var_max
             overall_max_A = min(max_A,overall_max_A)
-        
-        assert overall_max_A >= ModelScaler.min_scaling_params(**variables)['A'], "Parameter ranges not compatible for F2F conversion."
+
+        assert overall_max_A >= ModelScaler.min_scaling_params(variables)['A'], "Parameter ranges not compatible for F2F conversion."
 
         return {'alpha_t': alpha_t, 'A': overall_max_A}
 
