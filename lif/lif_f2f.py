@@ -73,8 +73,8 @@ class ModelScaler:
         """
         The scaling of each variable shouldn't surpass the largest values
         allowed on Loihi2. This is not foolproof, but should be a good choice.
-        In most cases we expect vth to be the one that defines the value of A.
-        (The other parameters would have to be at least factor of 1/dt larger than vth)
+        In most cases we expect v_th to be the one that defines the value of A.
+        (The other parameters would have to be at least factor of 1/dt larger than v_th)
         """
         from numpy import infty
         alpha_t = 1/variables['dt'][0]

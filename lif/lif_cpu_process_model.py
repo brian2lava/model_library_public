@@ -19,7 +19,7 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
     s_out = None  # This will be an OutPort of different LavaPyTypes
     j: np.ndarray = LavaPyType(np.ndarray, float)
     v: np.ndarray = LavaPyType(np.ndarray, float)
-    vrs: float = LavaPyType(float, float)
+    v_rs: float = LavaPyType(float, float)
     bias_mant: np.ndarray = LavaPyType(np.ndarray, float)
     bias_exp: np.ndarray = LavaPyType(np.ndarray, float)
     delta_j: float = LavaPyType(float, float)
@@ -44,7 +44,7 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
     def reset_voltage(self, spike_vector: np.ndarray):
         """Voltage reset behaviour. This can differ for different neuron
         models."""
-        self.v[spike_vector] = self.vrs
+        self.v[spike_vector] = self.v_rs
 
     def run_spk(self):
         """The run function that performs the actual computation during
@@ -70,7 +70,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
     s_out: None  # This will be an OutPort of different LavaPyTypes
     j: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     v: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
-    vrs: int = LavaPyType(int, np.int32, precision=17)
+    v_rs: int = LavaPyType(int, np.int32, precision=17)
     delta_j: int = LavaPyType(int, np.uint16, precision=12)
     delta_v: int = LavaPyType(int, np.uint16, precision=12)
     bias_mant: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=13)
@@ -98,9 +98,9 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         self.decay_unity = 2**self.decay_shift
         # Threshold and reset voltage are MSB-aligned by 6 bits
         # --> already done by Brian2Lava!
-        #self.vth_unity = 2**6
-        self.vth_unity = 2**0
-        #self.vrs_unity = 2**0
+        #self.v_th_unity = 2**6
+        self.v_th_unity = 2**0
+        #self.v_rs_unity = 2**0
         # Incoming activation is MSB-aligned by 6 bits
         self.act_unity = 2**6
 
@@ -183,7 +183,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         """Voltage reset behaviour. This can differ for different neuron
         models.
         """
-        self.v[spike_vector] = self.vrs
+        self.v[spike_vector] = self.v_rs
 
     def run_spk(self):
         """The run function that performs the actual computation during
@@ -200,7 +200,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         # (has to be done once after object construction)
         if not self.isthrscaled:
         	self.scale_threshold()
-
+        
         self.subthr_dynamics(activation_in=a_in_data)
 
         self.s_out_buff = self.spiking_activation()
@@ -221,7 +221,7 @@ class PyLifModelFloat(AbstractPyLifModelFloat):
     """
 
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
-    vth: float = LavaPyType(float, float)
+    v_th: float = LavaPyType(float, float)
 
     def __init__(self, proc_params):
         super(PyLifModelFloat, self).__init__(proc_params)
@@ -230,7 +230,7 @@ class PyLifModelFloat(AbstractPyLifModelFloat):
 
     def spiking_activation(self):
         """Spiking activation function for LIF."""
-        return self.v > self.vth
+        return self.v > self.v_th
 
 
 @implements(proc=LIF, protocol=LoihiProtocol)
@@ -253,16 +253,16 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
     - bias_mant: signed 13-bit integer (-4096 to 4095). Mantissa part of neuron
       bias.
     - bias_exp: unsigned 3-bit integer (0 to 7). Exponent part of neuron bias.
-    - vth: unsigned 17-bit integer (0 to 131071).
+    - v_th: unsigned 17-bit integer (0 to 131071).
 
     """
 
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
-    vth: int = LavaPyType(int, np.int32, precision=17)
+    v_th: int = LavaPyType(int, np.int32, precision=17)
 
     def __init__(self, proc_params):
         super(PyLifModelBitAcc, self).__init__(proc_params)
-        self.effective_vth = 0
+        self.effective_v_th = 0
         self.logger = get_logger('brian2.devices.lava')
         self.logger.debug(f"Process '{proc_params._parameters['name']}' initialized with PyLifModelBitAcc process model")
 
@@ -271,9 +271,9 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
         Loihi hardware, threshold is left-shifted by 6-bits to MSB-align it
         with other state variables of higher precision.
         """
-        self.effective_vth = np.int32(self.vth * self.vth_unity) # multiplication equaling left shift
+        self.effective_v_th = np.int32(self.v_th * self.v_th_unity) # multiplication equaling left shift
         self.isthrscaled = True
 
     def spiking_activation(self):
         """Spike when voltage exceeds threshold."""
-        return self.v > self.effective_vth
+        return self.v > self.effective_v_th

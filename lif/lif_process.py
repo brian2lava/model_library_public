@@ -56,7 +56,7 @@ class LIF(AbstractLIF):
     LIF dynamics abstracts to:
     j[t] = j[t-1] * (1-delta_j) + a_in         # neuron current
     v[t] = v[t-1] * (1-delta_v) + j[t] + bias  # neuron voltage
-    s_out = v[t] > vth                         # spike if threshold is exceeded
+    s_out = v[t] > v_th                         # spike if threshold is exceeded
     v[t] = 0                                   # reset at spike
 
     Parameters
@@ -78,11 +78,11 @@ class LIF(AbstractLIF):
     bias_exp : float, list, numpy.ndarray, optional
         Exponent part of neuron bias, if needed. Mostly for fixed point
         implementations. Ignored for floating point implementations.
-    vth : float, optional
+    v_th : float, optional
         Neuron threshold voltage, exceeding which, the neuron will spike.
         Currently, only a single threshold can be set for the entire
         population of neurons.
-    vrs : float, optional
+    v_rs : float, optional
         Neuron reset voltage after spike.
 
     Example
@@ -102,8 +102,8 @@ class LIF(AbstractLIF):
         delta_v: ty.Optional[float] = 0,
         bias_mant: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
         bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-        vth: ty.Optional[float] = 100,
-        vrs: ty.Optional[float] = 0,
+        v_th: ty.Optional[float] = 100,
+        v_rs: ty.Optional[float] = 0,
         name: ty.Optional[str] = None,
         log_config: ty.Optional[LogConfig] = None,
         tau_j: ty.Optional[float] = 0,
@@ -124,8 +124,8 @@ class LIF(AbstractLIF):
             **kwargs,
         )
         # Set threshold and reset voltage
-        self.vth = Var(shape=(1,), init=vth)
-        self.vrs = Var(shape=(1,), init=vrs)
+        self.v_th = Var(shape=(1,), init=v_th)
+        self.v_rs = Var(shape=(1,), init=v_rs)
         msg_var_par = f"Initialized attributes in process '{self.name}'"
             
         # Print the values
@@ -134,8 +134,8 @@ class LIF(AbstractLIF):
              tau_j = {tau_j}, tau_v = {tau_v}
              delta_j = {self.delta_j.init}, delta_v = {self.delta_v.init}
              bias_mant = {self.bias_mant.init}, bias_exp = {self.bias_exp.init}
-             vth = {self.vth.init}
-             vrs = {self.vrs.init}
+             v_th = {self.v_th.init}
+             v_rs = {self.v_rs.init}
              dt = {dt}"""
         self.logger.debug(msg_var_par)
         
