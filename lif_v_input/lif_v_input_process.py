@@ -16,9 +16,9 @@ class AbstractLIF(AbstractProcess):
         self,
         *,
         shape: ty.Tuple[int, ...],
-        j: ty.Union[float, list, np.ndarray],
+        v_psp: ty.Union[float, list, np.ndarray],
         v: ty.Union[float, list, np.ndarray],
-        delta_j: float,
+        delta_psp: float,
         delta_v: float,
         bias_mant: ty.Union[float, list, np.ndarray],
         bias_exp: ty.Union[float, list, np.ndarray],
@@ -28,9 +28,9 @@ class AbstractLIF(AbstractProcess):
     ) -> None:
         super().__init__(
             shape=shape,
-            j=j,
+            v_psp=v_psp,
             v=v,
-            delta_j=delta_j,
+            delta_psp=delta_psp,
             delta_v=delta_v,
             bias_mant=bias_mant,
             bias_exp=bias_exp,
@@ -42,34 +42,34 @@ class AbstractLIF(AbstractProcess):
 
         self.a_in = InPort(shape=shape)
         self.s_out = OutPort(shape=shape)
-        self.j = Var(shape=shape, init=j)
+        self.v_psp = Var(shape=shape, init=v_psp)
         self.v = Var(shape=shape, init=v)
-        self.delta_j = Var(shape=(1,), init=delta_j)
+        self.delta_psp = Var(shape=(1,), init=delta_psp)
         self.delta_v = Var(shape=(1,), init=delta_v)
         self.bias_exp = Var(shape=shape, init=bias_exp)
         self.bias_mant = Var(shape=shape, init=bias_mant)
 
 
-class LIF(AbstractLIF):
+class LIF_v_input(AbstractLIF):
     """Leaky-Integrate-and-Fire (LIF) neural Process.
 
     LIF dynamics abstracts to:
-    j[t] = j[t-1] * (1-delta_j) + a_in         # neuron current
-    v[t] = v[t-1] * (1-delta_v) + j[t] + bias  # neuron voltage
-    s_out = v[t] > v_th                         # spike if threshold is exceeded
-    v[t] = 0                                   # reset at spike
+    v_psp[t] = v_psp[t-1] * (1-delta_psp) + a_in         # sum of postsynaptic potentials
+    v[t] = v[t-1] * (1-delta_v) + v_psp[t] + bias        # neuron voltage
+    s_out = v[t] > vth                                   # spike if threshold is exceeded
+    v[t] = 0                                             # reset at spike
 
     Parameters
     ----------
     shape : tuple(int)
         Number and topology of LIF neurons.
-    j : float, list, numpy.ndarray, optional
-        Initial value of the neurons' current.
+    v_psp : float, list, numpy.ndarray, optional
+        Initial value of the sum of postsynaptic potentials.
     v : float, list, numpy.ndarray, optional
         Initial value of the neurons' voltage (membrane potential).
-    delta_j : float, optional
-        Inverse of decay time-constant for current decay. Currently, only a
-        single decay can be set for the entire population of neurons.
+    delta_psp : float, optional
+        Inverse of decay time-constant for postsynaptic potential decay. Currently,
+        only a single decay can be set for the entire population of neurons.
     delta_v : float, optional
         Inverse of decay time-constant for voltage decay. Currently, only a
         single decay can be set for the entire population of neurons.
@@ -78,17 +78,17 @@ class LIF(AbstractLIF):
     bias_exp : float, list, numpy.ndarray, optional
         Exponent part of neuron bias, if needed. Mostly for fixed point
         implementations. Ignored for floating point implementations.
-    v_th : float, optional
+    vth : float, optional
         Neuron threshold voltage, exceeding which, the neuron will spike.
         Currently, only a single threshold can be set for the entire
         population of neurons.
-    v_rs : float, optional
+    vrs : float, optional
         Neuron reset voltage after spike.
 
     Example
     -------
-    >>> lif = LIF(shape=(200, 15), delta_j=10, delta_v=5)
-    This will create 200x15 LIF neurons that all have the same current decay
+    >>> lif = LIF(shape=(200, 15), delta_psp=10, delta_v=5)
+    This will create 200x15 LIF neurons that all have the same PSP decay
     of 10 and voltage decay of 5.
     """
 
@@ -96,26 +96,26 @@ class LIF(AbstractLIF):
         self,
         *,
         shape: ty.Tuple[int, ...],
-        j: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+        v_psp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
         v: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-        delta_j: ty.Optional[float] = 0,
+        delta_psp: ty.Optional[float] = 0,
         delta_v: ty.Optional[float] = 0,
         bias_mant: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
         bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
-        v_th: ty.Optional[float] = 100,
-        v_rs: ty.Optional[float] = 0,
+        vth: ty.Optional[float] = 100,
+        vrs: ty.Optional[float] = 0,
         name: ty.Optional[str] = None,
         log_config: ty.Optional[LogConfig] = None,
-        tau_j: ty.Optional[float] = 0,
+        tau_psp: ty.Optional[float] = 0,
         tau_v: ty.Optional[float] = 0,
         dt: ty.Optional[float] = 0,
         **kwargs,
     ) -> None:
         super().__init__(
             shape=shape,
-            j=j,
+            v_psp=v_psp,
             v=v,
-            delta_j=delta_j,
+            delta_psp=delta_psp,
             delta_v=delta_v,
             bias_mant=bias_mant,
             bias_exp=bias_exp,
@@ -124,19 +124,19 @@ class LIF(AbstractLIF):
             **kwargs,
         )
         # Set threshold and reset voltage
-        self.v_th = Var(shape=(1,), init=v_th)
-        self.v_rs = Var(shape=(1,), init=v_rs)
+        self.vth = Var(shape=(1,), init=vth)
+        self.vrs = Var(shape=(1,), init=vrs)
         msg_var_par = f"Initialized attributes in process '{self.name}'"
             
         # Print the values
         msg_var_par = f"""{msg_var_par}:
              shape = {shape}
-             j = {j}, v = {v}
-             tau_j = {tau_j}, tau_v = {tau_v}
-             delta_j = {self.delta_j.init}, delta_v = {self.delta_v.init}
+             v_psp = {v_psp}, v = {v}
+             tau_psp = {tau_psp}, tau_v = {tau_v}
+             delta_psp = {self.delta_psp.init}, delta_v = {self.delta_v.init}
              bias_mant = {self.bias_mant.init}, bias_exp = {self.bias_exp.init}
-             v_th = {self.v_th.init}
-             v_rs = {self.v_rs.init}
+             vth = {self.vth.init}
+             vrs = {self.vrs.init}
              dt = {dt}"""
         self.logger.debug(msg_var_par)
         
