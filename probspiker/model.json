@@ -1,6 +1,6 @@
 {
 	"ode": [
-		"rnd : 1",
+		"rnd = rand(): 1 (constant over dt)",
 		"p_spike : 1"
 	],
 	"conditions": {
