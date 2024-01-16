@@ -142,7 +142,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         # Below, j is promoted to int64 to avoid overflow of the product
         # between j and decay term beyond int32. Subsequent right shift by
         # 12 brings us back within 24-bits (and hence, within 32-bits)
-        j_decayed = np.int64(self.j * (self.decay_unity - decay_const_j))
+        j_decayed = np.int64(self.j) * (self.decay_unity - decay_const_j)
         j_decayed = np.sign(j_decayed) * np.right_shift(
         	np.abs(j_decayed), self.decay_shift
         )
@@ -170,7 +170,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         decay_const_v = self.delta_v + self.dm_offset
         neg_voltage_limit = -np.int32(self.max_jv_val) + 1
         pos_voltage_limit = np.int32(self.max_jv_val) - 1
-        v_decayed = np.int64(self.v * (self.decay_unity - decay_const_v))
+        v_decayed = np.int64(self.v) * (self.decay_unity - decay_const_v)
         v_decayed = np.sign(v_decayed) * np.right_shift(
         	np.abs(v_decayed), self.decay_shift
         )
