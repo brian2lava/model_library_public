@@ -96,11 +96,9 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
 		# --> already done by Brian2Lava!
         self.decay_shift = 12
         self.decay_unity = 2**self.decay_shift
-        # Threshold and reset voltage are MSB-aligned by 6 bits
-        # --> already done by Brian2Lava!
-        #self.v_th_unity = 2**6
-        self.v_th_unity = 2**0
-        #self.v_rs_unity = 2**0
+        # Threshold voltage is MSB-aligned by 6 bits
+        # --> This implied shift is accounted for in Brian2Lava 
+        self.v_th_unity = 2**6
         # Incoming activation is MSB-aligned by 6 bits
         self.act_unity = 2**6
 
