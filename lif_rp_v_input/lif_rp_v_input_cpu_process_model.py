@@ -9,9 +9,7 @@ from lava.magma.core.model.py.model import PyLoihiProcessModel
 from brian2.utils.logger import get_logger
 
 class AbstractPyLifModelFloat(PyLoihiProcessModel):
-    """Abstract implementation of floating point precision
-    leaky-integrate-and-fire neuron model.
-
+    """Abstract implementation of floating point precision Leaky-Integrate-and-Fire neuron model.
     Specific implementations inherit from here.
     """
 
@@ -20,6 +18,8 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
     v_psp: np.ndarray = LavaPyType(np.ndarray, float)
     v: np.ndarray = LavaPyType(np.ndarray, float)
     vrs: float = LavaPyType(float, float)
+    t_rp: int = LavaPyType(int, int)
+    t_rp_end: np.ndarray = LavaPyType(np.ndarray, int) # This indicates until which timestep a neuron is in refractory period
     bias_mant: np.ndarray = LavaPyType(np.ndarray, float)
     bias_exp: np.ndarray = LavaPyType(np.ndarray, float)
     delta_psp: float = LavaPyType(float, float)
@@ -38,12 +38,16 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
         """Sub-threshold dynamics of postsynaptic potential and membrane voltage.
         """
         self.v_psp[:] = self.v_psp * (1 - self.delta_psp) + activation_in
-        self.v[:] = self.v * (1 - self.delta_v) + self.v_psp + self.bias_mant
 
-    def reset_voltage(self, spike_vector: np.ndarray):
-        """Membrane voltage reset behavior.
+        non_ref = self.t_rp_end < self.time_step
+        self.v[non_ref] = self.v[non_ref] * (1 - self.delta_v) + self.v_psp[non_ref] + self.bias_mant[non_ref]
+
+    def spiking_post_processing(self, spike_vector: np.ndarray):
+        """Post processing after spiking; including reset of membrane voltage
+        and starting of refractory period.
         """
         self.v[spike_vector] = self.vrs
+        self.t_rp_end[spike_vector] = (self.time_step + self.t_rp)
 
     def run_spk(self):
         """The run function that performs the actual computation during
@@ -55,14 +59,13 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
 
         self.subthr_dynamics(activation_in=a_in_data)
         self.s_out_buff = self.spiking_activation()
-        self.reset_voltage(spike_vector=self.s_out_buff)
+        self.spiking_post_processing(spike_vector=self.s_out_buff)
         self.s_out.send(self.s_out_buff)
 
 
 class AbstractPyLifModelFixed(PyLoihiProcessModel):
-    """Abstract implementation of fixed point precision
-    leaky-integrate-and-fire neuron model. Implementations like those
-    bit-accurate with Loihi hardware inherit from here.
+    """Abstract implementation of fixed point precision Leaky-Integrate-and-Fire neuron model.
+    Specific implementations inherit from here.
     """
 
     a_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int16, precision=16)
@@ -70,6 +73,9 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
     v_psp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     v: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     vrs: int = LavaPyType(int, np.int32, precision=17)
+    t_rp: int = LavaPyType(int, int)
+    t_rp_end: np.ndarray = LavaPyType(np.ndarray, int) # This indicates until which timestep a neuron is 
+                                                       # in refractory period
     delta_psp: int = LavaPyType(int, np.uint16, precision=12)
     delta_v: int = LavaPyType(int, np.uint16, precision=12)
     bias_mant: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=13)
@@ -175,12 +181,15 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         	np.abs(v_decayed), self.decay_shift
         )
         v_updated = np.int32(v_decayed + self.v_psp + self.effective_bias)
-        self.v[:] = np.clip(v_updated, neg_voltage_limit, pos_voltage_limit)
+        non_ref = self.t_rp_end < self.time_step
+        self.v[non_ref] = np.clip(v_updated[non_ref], neg_voltage_limit, pos_voltage_limit)
 
-    def reset_voltage(self, spike_vector: np.ndarray):
-        """Membrane voltage reset behavior.
+    def spiking_post_processing(self, spike_vector: np.ndarray):
+        """Post processing after spiking; including reset of membrane voltage
+        and starting of refractory period.
         """
         self.v[spike_vector] = self.vrs
+        self.t_rp_end[spike_vector] = (self.time_step + self.t_rp)
 
     def run_spk(self):
         """The run function that performs the actual computation during
@@ -207,7 +216,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         self.s_out.send(self.s_out_buff)
 
 
-@implements(proc=LIF_v_input, protocol=LoihiProtocol)
+@implements(proc=LIF_rp_v_input, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("floating_pt")
 class PyLifModelFloat(AbstractPyLifModelFloat):
@@ -230,18 +239,12 @@ class PyLifModelFloat(AbstractPyLifModelFloat):
         return self.v > self.vth
 
 
-@implements(proc=LIF_v_input, protocol=LoihiProtocol)
+@implements(proc=LIF_rp_v_input, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("bit_accurate_loihi", "fixed_pt")
-class PyLifModelBitAcc(AbstractPyLifModelFixed):
-    """Implementation of Leaky-Integrate-and-Fire neural process bit-accurate
-    with Loihi's hardware LIF dynamics, which means, it mimics Loihi
-    behaviour bit-by-bit.
-
-    Currently missing features (compared to Loihi 1 hardware):
-
-    - refractory period after spiking
-    - axonal delays
+class PyLifModelFixed(AbstractPyLifModelFixed):
+    """Implementation of Leaky-Integrate-and-Fire neural process in fixed point
+    precision to mimic the behavior of Loihi 2 bit-by-bit.
 
     Precisions of state variables
 
@@ -251,7 +254,6 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
       bias.
     - bias_exp: unsigned 3-bit integer (0 to 7). Exponent part of neuron bias.
     - vth: unsigned 17-bit integer (0 to 131071).
-
     """
 
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)

@@ -50,8 +50,9 @@ class AbstractLIF(AbstractProcess):
         self.bias_mant = Var(shape=shape, init=bias_mant)
 
 
-class LIF_v_input(AbstractLIF):
-    """Leaky-Integrate-and-Fire (LIF) neural Process.
+class LIF_rp_v_input(AbstractLIF):
+    """Leaky-Integrate-and-Fire (LIF) neural Process with refractory period and
+    postsynaptic potential input.
 
     LIF dynamics abstracts to:
     v_psp[t] = v_psp[t-1] * (1-delta_psp) + a_in         # sum of postsynaptic potentials
@@ -84,6 +85,8 @@ class LIF_v_input(AbstractLIF):
         population of neurons.
     vrs : float, optional
         Neuron reset voltage after spike.
+    t_rp : int, optional
+        The duration of the refractory period in timesteps.
 
     Example
     -------
@@ -104,6 +107,7 @@ class LIF_v_input(AbstractLIF):
         bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
         vth: ty.Optional[float] = 100,
         vrs: ty.Optional[float] = 0,
+        t_rp: ty.Optional[int] = 1,
         name: ty.Optional[str] = None,
         log_config: ty.Optional[LogConfig] = None,
         tau_psp: ty.Optional[float] = 0,
@@ -126,6 +130,8 @@ class LIF_v_input(AbstractLIF):
         # Set threshold and reset voltage
         self.vth = Var(shape=(1,), init=vth)
         self.vrs = Var(shape=(1,), init=vrs)
+        self.t_rp = Var(shape=(1,), init=t_rp)
+        self.t_rp_end = Var(shape=shape, init=0)
         msg_var_par = f"Initialized attributes in process '{self.name}'"
             
         # Print the values
@@ -137,6 +143,7 @@ class LIF_v_input(AbstractLIF):
              bias_mant = {self.bias_mant.init}, bias_exp = {self.bias_exp.init}
              vth = {self.vth.init}
              vrs = {self.vrs.init}
+             t_rp = {self.t_rp.init}
              dt = {dt}"""
         self.logger.debug(msg_var_par)
         

@@ -23,9 +23,10 @@
 		{ "name": "bias", "description": "bias current (red.)" , "unit": "V/s"},
 		{ "name": "v_th", "description": "threshold voltage", "unit": "V" },
 		{ "name": "v_rs", "description": "reset voltage", "unit": "V" },
+		{ "name": "t_rp", "description": "refractory period", "unit": "s" },
 		{ "name": "w", "description": "synaptic weight", "unit": "V" }
 
 	],
-	"process_name": "LIF_v_input",
+	"process_name": "LIF_rp_v_input",
 	"ucode_extensions": {"file": ".dasm", "template": "----"}
 }
