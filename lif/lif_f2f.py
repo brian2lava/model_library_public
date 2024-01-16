@@ -80,7 +80,7 @@ class ModelScaler:
         """
         from numpy import infty
         alpha_t = 1/variables['dt'][0]
-        overall_max_A = infty
+        overall_max_A, max_A = infty, infty
         for varname, (var_min,var_max) in variables.items():
             # Avoid zero values
             if var_max == 0:
