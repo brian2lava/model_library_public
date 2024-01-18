@@ -260,10 +260,10 @@ class PyLifModelFixed(AbstractPyLifModelFixed):
     vth: int = LavaPyType(int, np.int32, precision=17)
 
     def __init__(self, proc_params):
-        super(PyLifModelBitAcc, self).__init__(proc_params)
+        super(PyLifModelFixed, self).__init__(proc_params)
         self.effective_vth = 0
         self.logger = get_logger('brian2.devices.lava')
-        self.logger.debug(f"Process '{proc_params._parameters['name']}' initialized with PyLifModelBitAcc process model")
+        self.logger.debug(f"Process '{proc_params._parameters['name']}' initialized with PyLifModelFixed process model")
 
     def scale_threshold(self):
         """Scale threshold according to the way Loihi hardware scales it. In
