@@ -103,6 +103,13 @@ class ModelScaler:
             if var_max == 0:
                 continue
             max_val = LOIHI2_SPECS.Max_Voltage if varname!= 'w' else LOIHI2_SPECS.Max_Weights
+
+            # Account for the fact that some variables are represented with smaller bit-ranges.
+            # Since we're interested in their true value after the alignment, we account for the implied shift
+            # here.
+            if varname in LOIHI2_SPECS.MSB_Alignments:
+                var_max = var_max * 2**-(LOIHI2_SPECS.MSB_Alignments[varname])
+                
             if varname == 'v':
                 max_A = (max_val-1)/var_max
             # Here we have to account that the threshold voltage can increase
