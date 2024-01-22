@@ -9,7 +9,7 @@ for F2F conversion of the LIF model. A more meaningful table of the forward scal
     j       ->  A/alpha_t * j       = j'
     tau_v   ->  alpha_t * tau_v     = tau_v'
     tau_j   ->  alpha_t * tau_j     = tau_j'
-    w       ->  A/alpha_t**2 * w    = w'
+    w       ->  A/alpha_t * w    = w'
     bias    ->  A/alpha_t * bias    = bias'
     dt      ->  alpha_t * dt        = dt'
 
@@ -17,7 +17,7 @@ for F2F conversion of the LIF model. A more meaningful table of the forward scal
     values to be > 1:
 
     min_alpha_t = 1/dt
-    min_A = max(1/v, alpha_t/j, alpha_t**2/w, alpha_t/b)
+    min_A = max(1/v, alpha_t/j, alpha_t/w, alpha_t/b)
 
 Note: All the lambda functions must have the same number of arguments (all the parameters required in the scaling)
 """
@@ -37,7 +37,7 @@ class ModelScaler:
         'tau_theta': lambda alpha_t,A: alpha_t,
         'tau_r': lambda alpha_t,A: alpha_t,
 
-        'w': lambda alpha_t,A: A/alpha_t**2,
+        'w': lambda alpha_t,A: A/alpha_t,
         'bias': lambda alpha_t,A: A/alpha_t,
         # Threshold scales as v
         'theta_0': lambda alpha_t,A: A,
@@ -70,7 +70,7 @@ class ModelScaler:
         if j != 0:
             params_to_max.append(min_alpha_t/j)
         if w != 0:
-            params_to_max.append(min_alpha_t**2/w)
+            params_to_max.append(min_alpha_t/w)
         if b != 0:
             params_to_max.append(min_alpha_t/b)
 
@@ -122,7 +122,7 @@ class ModelScaler:
             elif varname in ['j','bias']:
                 max_A = (max_val-1)*alpha_t/var_max
             elif varname == 'w':
-                max_A = (max_val-1)*alpha_t**2/var_max
+                max_A = (max_val-1)*alpha_t/var_max
             overall_max_A = min(max_A,overall_max_A)
 
         assert overall_max_A >= ModelScaler.min_scaling_params(variables)['A'], "Parameter ranges not compatible for F2F conversion."
