@@ -85,7 +85,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         self.ds_offset = 0 #1 # TODO fix? this has been causing problems
         self.dm_offset = 0
         self.isbiasscaled = False
-        self.parameters_scaled = False
+        self.isthrscaled = False
         self.effective_bias = 0
         # Let's define some bit-widths from Loihi
         # State variables j and v are 24-bits wide
