@@ -68,11 +68,11 @@ class LIF(AbstractLIF):
     v : float, list, numpy.ndarray, optional
         Initial value of the neurons' voltage (membrane potential).
     delta_j : float, optional
-        Inverse of decay time-constant for current decay. Currently, only a
-        single decay can be set for the entire population of neurons.
+        Inverse of decay time constant `tau_j` for current decay. Currently, 
+        only a single decay can be set for the entire population of neurons.
     delta_v : float, optional
-        Inverse of decay time-constant for voltage decay. Currently, only a
-        single decay can be set for the entire population of neurons.
+        Inverse of decay time constant `tau_v` for voltage decay. Currently, 
+        only a single decay can be set for the entire population of neurons.
     bias_mant : float, list, numpy.ndarray, optional
         Mantissa part of neuron bias.
     bias_exp : float, list, numpy.ndarray, optional
@@ -104,11 +104,9 @@ class LIF(AbstractLIF):
         bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
         v_th: ty.Optional[float] = 100,
         v_rs: ty.Optional[float] = 0,
+        dt: ty.Optional[float] = 0,
         name: ty.Optional[str] = None,
         log_config: ty.Optional[LogConfig] = None,
-        tau_j: ty.Optional[float] = 0,
-        tau_v: ty.Optional[float] = 0,
-        dt: ty.Optional[float] = 0,
         **kwargs,
     ) -> None:
         super().__init__(
@@ -131,9 +129,10 @@ class LIF(AbstractLIF):
         # Print the values
         msg_var_par = f"""{msg_var_par}:
              shape = {shape}
-             j = {j}, v = {v}
-             tau_j = {tau_j}, tau_v = {tau_v}
-             delta_j = {self.delta_j.init}, delta_v = {self.delta_v.init}
+             j = {j}
+             v = {v}
+             delta_j = {self.delta_j.init} (computed from tau_j)
+             delta_v = {self.delta_v.init} (computed from tau_v)
              bias_mant = {self.bias_mant.init}, bias_exp = {self.bias_exp.init}
              v_th = {self.v_th.init}
              v_rs = {self.v_rs.init}
