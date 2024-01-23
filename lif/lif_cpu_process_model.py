@@ -85,7 +85,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         self.ds_offset = 0 #1 # TODO fix? this has been causing problems
         self.dm_offset = 0
         self.isbiasscaled = False
-        self.isthrscaled = False
+        self.parameters_scaled = False
         self.effective_bias = 0
         # Let's define some bit-widths from Loihi
         # State variables j and v are 24-bits wide
@@ -112,10 +112,10 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
             np.right_shift(bias_mant, -self.bias_exp),
         )
 
-    def scale_threshold(self):
+    def scale_parameters(self):
         """Placeholder method for scaling paraneters (threshold, reset potential, ...)."""
         raise NotImplementedError(
-            "scale_threshold() cannot be called from "
+            "scale_parameters() cannot be called from "
             "an abstract ProcessModel"
         )
 
@@ -194,8 +194,8 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
 
         # Compute scaled threshold-related variables only once, not every timestep
         # (has to be done after object construction)
-        if not self.isthrscaled:
-            self.scale_threshold()
+        if not self.parameters_scaled:
+            self.scale_parameters()
 
         self.subthr_dynamics(activation_in=a_in_data)
         self.s_out_buff = self.spiking_activation()
@@ -261,13 +261,14 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
         self.logger = get_logger('brian2.devices.lava')
         self.logger.debug(f"Process '{proc_params._parameters['name']}' initialized with PyLifModelBitAcc process model")
 
-    def scale_threshold(self):
+    def scale_parameters(self):
         """Scale threshold and reset potential to fit the way Loihi hardware would scale it. In
         Loihi hardware, threshold is left-shifted by 6-bits to MSB-align it with other state variables 
         of higher precision.
         """
         self.effective_v_th = np.int32(self.v_th * self.act_unity) # multiplication equaling left shift
-        self.isthrscaled = True
+        self.effective_v_rs = np.int32(self.v_rs * self.act_unity) # multiplication equaling left shift
+        self.parameters_scaled = True
 
     def spiking_activation(self):
         """Spike when voltage exceeds threshold."""
