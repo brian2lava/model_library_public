@@ -106,7 +106,6 @@ class ModelScaler:
         alpha_t = 1/variables['dt'][0]
         overall_max_A = infty
         max_A = infty
-        print("VARIABLES!!!!!!!!!!!!", list(variables.keys()))
         for varname, (var_min,var_max) in variables.items():
             # Avoid zero values
             if var_max == 0:

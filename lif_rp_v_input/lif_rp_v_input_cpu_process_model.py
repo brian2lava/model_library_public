@@ -75,7 +75,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
     vrs: int = LavaPyType(int, np.int32, precision=17)
     t_rp_steps: int = LavaPyType(int, int)
     t_rp_steps_end: np.ndarray = LavaPyType(np.ndarray, int) # This indicates until which timestep a neuron is 
-                                                       # in refractory period
+                                                             # in refractory period
     delta_psp: int = LavaPyType(int, np.uint16, precision=12)
     delta_v: int = LavaPyType(int, np.uint16, precision=12)
     bias_mant: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=13)
@@ -88,25 +88,20 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         # for postsynaptic potential and membrane voltage, respectively. They enable setting
         # decay constant values to exact 4096 = 2**12. Without them, the range of
         # 12-bit unsigned delta_psp and delta_v is 0 to 4095.
-        self.ds_offset = 1
+        self.ds_offset = 0 #1 # TODO fix? this has been causing problems
         self.dm_offset = 0
-        self.isbiasscaled = False
-        self.isthrscaled = False
+        self.parameters_scaled = False
         self.effective_bias = 0
         # Let's define some bit-widths from Loihi
         # State variables v_psp and v are 24-bits wide
         self.bitwidth = 24
         self.max_val = 2 ** (self.bitwidth - 1)
-        # Decays need an MSB alignment with 12-bits
-		# --> already done by Brian2Lava!
+        # MSB alignment of decays by 12 bits
+        # --> decay constants are accordingly prepared by Brian2Lava 
         self.decay_shift = 12
         self.decay_unity = 2**self.decay_shift
-        # Threshold and reset voltage are MSB-aligned by 6 bits
-        # --> already done by Brian2Lava!
-        #self.vth_unity = 2**6
-        self.vth_unity = 2**0
-        #self.vrs_unity = 2**0
-        # Incoming activation is MSB-aligned by 6 bits
+        # MSB alignment of incoming activation and voltage parameters by 6 bits
+        # --> input values & constants are accordingly prepared by Brian2Lava 
         self.act_unity = 2**6
 
     def scale_bias(self):
@@ -204,8 +199,8 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
 
         # Compute scaled threshold-related variables only once, not every time-step
         # (has to be done once after object construction)
-        if not self.isthrscaled:
-            self.scale_threshold()
+        if not self.parameters_scaled:
+            self.scale_parameters()
 
         # Compute subthreshold and spiking dynamics
         self.subthr_dynamics(activation_in=a_in_data)
@@ -261,16 +256,18 @@ class PyLifModelFixed(AbstractPyLifModelFixed):
     def __init__(self, proc_params):
         super(PyLifModelFixed, self).__init__(proc_params)
         self.effective_vth = 0
+        self.effective_vrs = 0
         self.logger = get_logger('brian2.devices.lava')
         self.logger.debug(f"Process '{proc_params._parameters['name']}' initialized with PyLifModelFixed process model")
 
-    def scale_threshold(self):
-        """Scale threshold according to the way Loihi hardware scales it. In
-        Loihi hardware, threshold is left-shifted by 6-bits to MSB-align it
-        with other state variables of higher precision.
+    def scale_parameters(self):
+        """Scale threshold and reset potential to fit the way Loihi hardware would scale it. In
+        Loihi hardware, threshold is left-shifted by 6-bits to MSB-align it with other state variables 
+        of higher precision.
         """
-        self.effective_vth = np.int32(self.vth * self.vth_unity) # multiplication equaling left shift
-        self.isthrscaled = True
+        self.effective_vth = np.int32(self.vth * self.act_unity) # multiplication equaling left shift
+        self.effective_vrs = np.int32(self.vrs * self.act_unity) # multiplication equaling left shift
+        self.parameters_scaled = True
 
     def spiking_activation(self):
         """Spike when voltage exceeds threshold."""

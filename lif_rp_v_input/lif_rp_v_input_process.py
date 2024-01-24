@@ -133,7 +133,7 @@ class LIF_rp_v_input(AbstractLIF):
         self.vth = Var(shape=(1,), init=vth)
         self.vrs = Var(shape=(1,), init=vrs)
         self.t_rp_steps = Var(shape=(1,), init=t_rp_steps)
-        self.t_rp_steps_end = Var(shape=shape, init=0)
+        self.t_rp_steps_end = Var(shape=shape, init=-1)
         msg_var_par = f"Initialized attributes in process '{self.name}'"
             
         # Print the values
