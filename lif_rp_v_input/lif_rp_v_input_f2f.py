@@ -5,10 +5,8 @@ if this is not present then f2f scaling won't be supported for that model.
 A dictionary containing lambda functions to perform the variable-wise scaling
 for F2F conversion of the LIF model. A more meaningful table of the forward scalings:
 
-    v       ->  A * v               = v' (same for all voltage related vars like theta and r)
+    v       ->  A * v               = v'
     j       ->  A/alpha_t * j       = j'
-    tau_v   ->  alpha_t * tau_v     = tau_v'
-    tau_j   ->  alpha_t * tau_j     = tau_j'
     w       ->  A/alpha_t * w    = w'
     bias    ->  A/alpha_t * bias    = bias'
     dt      ->  alpha_t * dt        = dt'
@@ -21,30 +19,24 @@ for F2F conversion of the LIF model. A more meaningful table of the forward scal
 
 Note: All the lambda functions must have the same number of arguments (all the parameters required in the scaling)
 """
-
-
 from brian2lava.utils.const import LOIHI2_SPECS
 class ModelScaler:
-    # This attribute is not used but can be useful for debugging
-    process_class = 'ATRLIF'
+    process_class = 'LIF_rp_v_input'
     forward_ops = {
         'v' : lambda alpha_t,A: A,
+        'v_rs': lambda alpha_t,A: A,
+        'v_th': lambda alpha_t,A: A,
         'dt': lambda alpha_t,A: alpha_t,
         'j': lambda alpha_t,A: A/alpha_t,
         'w': lambda alpha_t,A: A/alpha_t,
         'bias': lambda alpha_t,A: A/alpha_t,
-        # Threshold scales as v
-        'theta_0': lambda alpha_t,A: A,
-        'theta': lambda alpha_t,A: A,
-        'theta_step': lambda alpha_t,A: A,
-        # Refractory variable scales also as v
-        'r': lambda alpha_t,A: A,
     }
-    
-    variables = {'v','j','theta','r'}
-    const = None
+    # It's useful to differentiate variables and constants
+    # since they are treated differently by Loihi
+    variables = {'v','j'}
     MSB = None
-    mant_exp = {'bias','w'}
+    const = None
+    mant_exp = {'bias', 'w'}
     
     @staticmethod
     def max_val(varname):
@@ -63,7 +55,6 @@ class ModelScaler:
         """
         # take the min of each variable
         dt,v,j,b = variables['dt'][0],variables['v'][0],variables['j'][0],variables['bias'][0]
-        theta,r = variables['theta'][0], variables['r'][0]
         # If this neuron doesn't have any synapses connected to it, w won't be defined.
         w = variables['w'][0] if 'w' in variables else 0
         min_alpha_t = 1/dt
@@ -71,10 +62,6 @@ class ModelScaler:
         params_to_max = []
         if v != 0:
             params_to_max.append(1/v)
-        if theta != 0:
-            params_to_max.append(1/theta)
-        if r != 0:
-            params_to_max.append(1/r)
         if j != 0:
             params_to_max.append(min_alpha_t/j)
         if w != 0:
@@ -103,10 +90,8 @@ class ModelScaler:
         (The other parameters would have to be at least factor of 1/dt larger than vth)
         """
         from numpy import infty
-        alpha_t = 1/variables['dt'][0]
-        overall_max_A = infty
-        max_A = infty
-        print("VARIABLES!!!!!!!!!!!!", list(variables.keys()))
+        alpha_t = 1/variables.pop['dt'][0]
+        overall_max_A, max_A = infty, infty
         for varname, (var_min,var_max) in variables.items():
             # Avoid zero values
             if var_max == 0:
@@ -119,34 +104,13 @@ class ModelScaler:
             if varname in ModelScaler.MSB:
                 max_val = max_val * 2**LOIHI2_SPECS.MSB_Alignment
                 
-            if varname == 'v':
+            if varname in ['v','v_th','v_rs']:
                 max_A = (max_val-1)/var_max
-            # Here we have to account that the threshold voltage can increase
-            # as a safety measure we allow 3 step sizes within the max range of values
-            # TODO: This should be adapted based on user feedback.
-            elif varname == 'theta_0':
-                step = variables['theta_step'][1]
-                # Steps could also be negative? 
-                var_max = max(var_max + 3*step, var_max)
-                max_A = (max_val-1)/var_max
-            elif varname == 'r':
-                theta = variables['theta_0'][1]
-                step = variables['theta_step'][1]
-                # Account for the same window as above but from the perspective of r
-                var_max = max(var_max + theta + 3*step, var_max)
-                max_A = (max_val-1)/var_max 
-            elif varname =='bias':
+            elif varname in ['j','bias']:
                 max_A = (max_val-1)*alpha_t/var_max
-            elif varname == 'j':
-                max_A = (max_val-1)*alpha_t/var_max
-
-            # In this model it's important to allow spikes to
-            # accumulate in the current, because we don't have
-            # a real threshold!
-            # MOST RELEVANT PARAMETER ===================
             elif varname == 'w':
-                var_max = 2*var_max
                 max_A = (max_val-1)*alpha_t/var_max
+                
             overall_max_A = min(max_A,overall_max_A)
 
         assert overall_max_A >= ModelScaler.min_scaling_params(variables)['A'], "Parameter ranges not compatible for F2F conversion."

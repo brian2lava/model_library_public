@@ -18,8 +18,8 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
     v_psp: np.ndarray = LavaPyType(np.ndarray, float)
     v: np.ndarray = LavaPyType(np.ndarray, float)
     vrs: float = LavaPyType(float, float)
-    t_rp: int = LavaPyType(int, int)
-    t_rp_end: np.ndarray = LavaPyType(np.ndarray, int) # This indicates until which timestep a neuron is in refractory period
+    t_rp_steps: int = LavaPyType(int, int)
+    t_rp_steps_end: np.ndarray = LavaPyType(np.ndarray, int) # This indicates until which timestep a neuron is in refractory period
     bias_mant: np.ndarray = LavaPyType(np.ndarray, float)
     bias_exp: np.ndarray = LavaPyType(np.ndarray, float)
     delta_psp: float = LavaPyType(float, float)
@@ -39,7 +39,7 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
         """
         self.v_psp[:] = self.v_psp * (1 - self.delta_psp) + activation_in
 
-        non_ref = self.t_rp_end < self.time_step
+        non_ref = self.t_rp_steps_end < self.time_step
         self.v[non_ref] = self.v[non_ref] * (1 - self.delta_v) + self.v_psp[non_ref] + self.bias_mant[non_ref]
 
     def spiking_post_processing(self, spike_vector: np.ndarray):
@@ -47,7 +47,7 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
         and starting of refractory period.
         """
         self.v[spike_vector] = self.vrs
-        self.t_rp_end[spike_vector] = (self.time_step + self.t_rp)
+        self.t_rp_steps_end[spike_vector] = (self.time_step + self.t_rp_steps)
 
     def run_spk(self):
         """The run function that performs the actual computation during
@@ -73,8 +73,8 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
     v_psp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     v: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     vrs: int = LavaPyType(int, np.int32, precision=17)
-    t_rp: int = LavaPyType(int, int)
-    t_rp_end: np.ndarray = LavaPyType(np.ndarray, int) # This indicates until which timestep a neuron is 
+    t_rp_steps: int = LavaPyType(int, int)
+    t_rp_steps_end: np.ndarray = LavaPyType(np.ndarray, int) # This indicates until which timestep a neuron is 
                                                        # in refractory period
     delta_psp: int = LavaPyType(int, np.uint16, precision=12)
     delta_v: int = LavaPyType(int, np.uint16, precision=12)
@@ -181,7 +181,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         	np.abs(v_decayed), self.decay_shift
         )
         v_updated = np.int32(v_decayed + self.v_psp + self.effective_bias)
-        non_ref = self.t_rp_end < self.time_step
+        non_ref = self.t_rp_steps_end < self.time_step
         self.v[non_ref] = np.clip(v_updated[non_ref], neg_voltage_limit, pos_voltage_limit)
 
     def spiking_post_processing(self, spike_vector: np.ndarray):
@@ -189,13 +189,13 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         and starting of refractory period.
         """
         self.v[spike_vector] = self.vrs
-        self.t_rp_end[spike_vector] = (self.time_step + self.t_rp)
+        self.t_rp_steps_end[spike_vector] = (self.time_step + self.t_rp_steps)
 
     def run_spk(self):
         """The run function that performs the actual computation during
         execution orchestrated by a PyLoihiProcessModel using the
         LoihiProtocol.
-        """
+        """        
         # Receive synaptic input
         a_in_data = self.a_in.recv()
 
@@ -207,14 +207,13 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         if not self.isthrscaled:
             self.scale_threshold()
 
+        # Compute subthreshold and spiking dynamics
         self.subthr_dynamics(activation_in=a_in_data)
-
         self.s_out_buff = self.spiking_activation()
 
         # Reset voltage of spiked neurons to 0
-        self.reset_voltage(spike_vector=self.s_out_buff)
+        self.spiking_post_processing(spike_vector=self.s_out_buff)
         self.s_out.send(self.s_out_buff)
-
 
 @implements(proc=LIF_rp_v_input, protocol=LoihiProtocol)
 @requires(CPU)

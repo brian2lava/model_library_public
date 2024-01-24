@@ -7,8 +7,6 @@ for F2F conversion of the LIF model. A more meaningful table of the forward scal
 
     v       ->  A * v               = v'
     j       ->  A/alpha_t * j       = j'
-    tau_v   ->  alpha_t * tau_v     = tau_v'
-    tau_j   ->  alpha_t * tau_j     = tau_j'
     w       ->  A/alpha_t * w    = w'
     bias    ->  A/alpha_t * bias    = bias'
     dt      ->  alpha_t * dt        = dt'
@@ -30,11 +28,26 @@ class ModelScaler:
         'v_th': lambda alpha_t,A: A,
         'dt': lambda alpha_t,A: alpha_t,
         'j': lambda alpha_t,A: A/alpha_t,
-        'tau_v': lambda alpha_t,A: alpha_t,
-        'tau_j': lambda alpha_t,A: alpha_t,
         'w': lambda alpha_t,A: A/alpha_t,
         'bias': lambda alpha_t,A: A/alpha_t,
     }
+    # It's useful to differentiate variables and constants
+    # since they are treated differently by Loihi
+    variables = {'v','j'}
+    # MSB is defined in model.json. To avoid copy-paste mistakes we assign this variable
+    # at runtime from the F2F converter.
+    MSB = None 
+    const = None
+    mant_exp = {'bias', 'w'}
+    
+    @staticmethod
+    def max_val(varname):
+        if varname in ModelScaler.variables:
+            return LOIHI2_SPECS.Max_Variables
+        elif varname in ModelScaler.const:
+            return LOIHI2_SPECS.Max_Constants
+        else:
+            return LOIHI2_SPECS.Max_Weights
 
     @staticmethod
     def min_scaling_params(variables):
@@ -79,19 +92,19 @@ class ModelScaler:
         (The other parameters would have to be at least factor of 1/dt larger than vth)
         """
         from numpy import infty
-        alpha_t = 1/variables['dt'][0]
+        alpha_t = 1/variables.pop['dt'][0]
         overall_max_A, max_A = infty, infty
         for varname, (var_min,var_max) in variables.items():
             # Avoid zero values
             if var_max == 0:
                 continue
-            max_val = LOIHI2_SPECS.Max_Voltage if varname!= 'w' else LOIHI2_SPECS.Max_Weights
-
+            max_val = ModelScaler.max_val(varname) 
+            
             # Account for the fact that some variables are represented with smaller bit-ranges.
             # Since we're interested in their true value after the alignment, we account for the implied shift
             # here.
-            if varname in LOIHI2_SPECS.MSB_Alignments:
-                var_max = var_max * 2**-(LOIHI2_SPECS.MSB_Alignments[varname])
+            if varname in ModelScaler.MSB:
+                max_val = max_val * 2**LOIHI2_SPECS.MSB_Alignment
                 
             if varname in ['v','v_th','v_rs']:
                 max_A = (max_val-1)/var_max
@@ -99,6 +112,7 @@ class ModelScaler:
                 max_A = (max_val-1)*alpha_t/var_max
             elif varname == 'w':
                 max_A = (max_val-1)*alpha_t/var_max
+                
             overall_max_A = min(max_A,overall_max_A)
 
         assert overall_max_A >= ModelScaler.min_scaling_params(variables)['A'], "Parameter ranges not compatible for F2F conversion."

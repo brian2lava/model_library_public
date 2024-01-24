@@ -27,6 +27,7 @@
 		{ "name": "w", "description": "synaptic weight", "unit": "V" }
 
 	],
+	"MSB" : ["v_rs","v_th","w"],
 	"process_name": "LIF_rp_v_input",
 	"ucode_extensions": {"file": ".dasm", "template": "----"}
 }

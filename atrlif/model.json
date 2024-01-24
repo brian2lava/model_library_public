@@ -39,6 +39,7 @@
 		
 
 	],
+	"MSB" : ["theta_0","theta_step","w"],
 	"process_name": "ATRLIF",
 	"ucode_extensions": {"file": ".dasm", "template": "----"}
 }

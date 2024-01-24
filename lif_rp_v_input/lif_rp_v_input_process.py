@@ -68,9 +68,13 @@ class LIF_rp_v_input(AbstractLIF):
         Initial value of the sum of postsynaptic potentials.
     v : float, list, numpy.ndarray, optional
         Initial value of the neurons' voltage (membrane potential).
-    delta_psp : float, optional
-        Inverse of decay time-constant for postsynaptic potential decay. Currently,
+    delta_v : float, optional
+        Inverse of decay time constant `tau_v` for voltage decay. Currently, 
         only a single decay can be set for the entire population of neurons.
+    delta_psp : float, optional
+        Inverse of decay time constant `tau_psp` for postsynaptic potential decay.
+        Currently, only a single decay can be set for the entire population of 
+        neurons.
     delta_v : float, optional
         Inverse of decay time-constant for voltage decay. Currently, only a
         single decay can be set for the entire population of neurons.
@@ -85,7 +89,7 @@ class LIF_rp_v_input(AbstractLIF):
         population of neurons.
     vrs : float, optional
         Neuron reset voltage after spike.
-    t_rp : int, optional
+    t_rp_steps : int, optional
         The duration of the refractory period in timesteps.
 
     Example
@@ -107,12 +111,10 @@ class LIF_rp_v_input(AbstractLIF):
         bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
         vth: ty.Optional[float] = 100,
         vrs: ty.Optional[float] = 0,
-        t_rp: ty.Optional[int] = 1,
+        t_rp_steps: ty.Optional[int] = 1,
+        dt: ty.Optional[float] = 0,
         name: ty.Optional[str] = None,
         log_config: ty.Optional[LogConfig] = None,
-        tau_psp: ty.Optional[float] = 0,
-        tau_v: ty.Optional[float] = 0,
-        dt: ty.Optional[float] = 0,
         **kwargs,
     ) -> None:
         super().__init__(
@@ -130,20 +132,21 @@ class LIF_rp_v_input(AbstractLIF):
         # Set threshold and reset voltage
         self.vth = Var(shape=(1,), init=vth)
         self.vrs = Var(shape=(1,), init=vrs)
-        self.t_rp = Var(shape=(1,), init=t_rp)
-        self.t_rp_end = Var(shape=shape, init=0)
+        self.t_rp_steps = Var(shape=(1,), init=t_rp_steps)
+        self.t_rp_steps_end = Var(shape=shape, init=0)
         msg_var_par = f"Initialized attributes in process '{self.name}'"
             
         # Print the values
         msg_var_par = f"""{msg_var_par}:
              shape = {shape}
-             v_psp = {v_psp}, v = {v}
-             tau_psp = {tau_psp}, tau_v = {tau_v}
-             delta_psp = {self.delta_psp.init}, delta_v = {self.delta_v.init}
+             v_psp = {v_psp}
+             v = {v}
+             delta_psp = {self.delta_psp.init} (computed from tau_psp)
+             delta_v = {self.delta_v.init} (computed from tau_v)
              bias_mant = {self.bias_mant.init}, bias_exp = {self.bias_exp.init}
              vth = {self.vth.init}
              vrs = {self.vrs.init}
-             t_rp = {self.t_rp.init}
+             t_rp_steps = {self.t_rp_steps.init} (computed from t_rp)
              dt = {dt}"""
         self.logger.debug(msg_var_par)
         
