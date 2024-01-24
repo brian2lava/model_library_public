@@ -84,7 +84,6 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         # 12-bit unsigned delta_j and delta_v is 0 to 4095.
         self.ds_offset = 0 #1 # TODO fix? this has been causing problems
         self.dm_offset = 0
-        self.isbiasscaled = False
         self.parameters_scaled = False
         self.effective_bias = 0
         # Let's define some bit-widths from Loihi
