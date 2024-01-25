@@ -16,5 +16,6 @@
 		{ "name": "p_spike", "description": "probability of a spike in one timestep", "unit": "1" }
 	],
 	"process_name": "ProbSpiker",
+	"MSB" : ["p_spike"],
 	"ucode_extensions": {"file": ".dasm", "template": "----"}
 }

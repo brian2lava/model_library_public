@@ -17,7 +17,7 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
     s_out = None  # This will be an OutPort of different LavaPyTypes
     v_psp: np.ndarray = LavaPyType(np.ndarray, float)
     v: np.ndarray = LavaPyType(np.ndarray, float)
-    vrs: float = LavaPyType(float, float)
+    v_rs: float = LavaPyType(float, float)
     t_rp_steps: int = LavaPyType(int, int)
     t_rp_steps_end: np.ndarray = LavaPyType(np.ndarray, int) # This indicates until which timestep a neuron is in refractory period
     bias_mant: np.ndarray = LavaPyType(np.ndarray, float)
@@ -46,7 +46,7 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
         """Post processing after spiking; including reset of membrane voltage
         and starting of refractory period.
         """
-        self.v[spike_vector] = self.vrs
+        self.v[spike_vector] = self.v_rs
         self.t_rp_steps_end[spike_vector] = (self.time_step + self.t_rp_steps)
 
     def run_spk(self):
@@ -72,7 +72,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
     s_out: None  # This will be an OutPort of different LavaPyTypes
     v_psp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     v: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
-    vrs: int = LavaPyType(int, np.int32, precision=17)
+    v_rs: int = LavaPyType(int, np.int32, precision=17)
     t_rp_steps: int = LavaPyType(int, int)
     t_rp_steps_end: np.ndarray = LavaPyType(np.ndarray, int) # This indicates until which timestep a neuron is 
                                                              # in refractory period
@@ -183,7 +183,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         """Post processing after spiking; including reset of membrane voltage
         and starting of refractory period.
         """
-        self.v[spike_vector] = self.vrs
+        self.v[spike_vector] = self.effective_v_rs
         self.t_rp_steps_end[spike_vector] = (self.time_step + self.t_rp_steps)
 
     def run_spk(self):
@@ -221,7 +221,7 @@ class PyLifModelFloat(AbstractPyLifModelFloat):
     """
 
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, float)
-    vth: float = LavaPyType(float, float)
+    v_th: float = LavaPyType(float, float)
 
     def __init__(self, proc_params):
         super(PyLifModelFloat, self).__init__(proc_params)
@@ -230,7 +230,7 @@ class PyLifModelFloat(AbstractPyLifModelFloat):
 
     def spiking_activation(self):
         """Spiking activation function for LIF."""
-        return self.v > self.vth
+        return self.v > self.v_th
 
 
 @implements(proc=LIF_rp_v_input, protocol=LoihiProtocol)
@@ -247,16 +247,16 @@ class PyLifModelFixed(AbstractPyLifModelFixed):
     - bias_mant: signed 13-bit integer (-4096 to 4095). Mantissa part of neuron
       bias.
     - bias_exp: unsigned 3-bit integer (0 to 7). Exponent part of neuron bias.
-    - vth: unsigned 17-bit integer (0 to 131071).
+    - v_th: unsigned 17-bit integer (0 to 131071).
     """
 
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
-    vth: int = LavaPyType(int, np.int32, precision=17)
+    v_th: int = LavaPyType(int, np.int32, precision=17)
 
     def __init__(self, proc_params):
         super(PyLifModelFixed, self).__init__(proc_params)
-        self.effective_vth = 0
-        self.effective_vrs = 0
+        self.effective_v_th = 0
+        self.effective_v_rs = 0
         self.logger = get_logger('brian2.devices.lava')
         self.logger.debug(f"Process '{proc_params._parameters['name']}' initialized with PyLifModelFixed process model")
 
@@ -265,10 +265,10 @@ class PyLifModelFixed(AbstractPyLifModelFixed):
         Loihi hardware, threshold is left-shifted by 6-bits to MSB-align it with other state variables 
         of higher precision.
         """
-        self.effective_vth = np.int32(self.vth * self.act_unity) # multiplication equaling left shift
-        self.effective_vrs = np.int32(self.vrs * self.act_unity) # multiplication equaling left shift
+        self.effective_v_th = np.int32(self.v_th * self.act_unity) # multiplication equaling left shift
+        self.effective_v_rs = np.int32(self.v_rs * self.act_unity) # multiplication equaling left shift
         self.parameters_scaled = True
 
     def spiking_activation(self):
         """Spike when voltage exceeds threshold."""
-        return self.v > self.effective_vth
+        return self.v > self.effective_v_th
