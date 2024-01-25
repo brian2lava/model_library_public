@@ -43,17 +43,21 @@ class PyProbSpikerModelFixed(PyLoihiProcessModel):
     """
     shape: np.ndarray = LavaPyType(np.ndarray, int)
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, int)
-    rnd: np.ndarray = LavaPyType(np.ndarray, float)
-    p_spike: np.ndarray = LavaPyType(np.ndarray, float)
+    rnd: np.ndarray = LavaPyType(np.ndarray, int)
+    p_spike: np.ndarray = LavaPyType(np.ndarray, int)
 
     def __init__(self, proc_params):
         super(PyProbSpikerModelFixed, self).__init__(proc_params)
         self.logger = get_logger('brian2.devices.lava')
         self.logger.debug(f"Process '{proc_params._parameters['name']}' initialized with PyProbSpikerModelFixed process model")
 
+        # MSB alignment of random numbers by 24 bits
+        # --> probability is accordingly prepared by Brian2Lava 
+        self.random_unity = 2**24
+
     def spiking_activation(self):
         """Spiking activation function."""
-        self.rnd = np.random.rand(self.shape[0])
+        self.rnd = np.random.randint(0, self.random_unity+1, size=self.shape[0])
         return self.rnd < self.p_spike
 
     def run_spk(self):
