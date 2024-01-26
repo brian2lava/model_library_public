@@ -115,18 +115,16 @@ class PyATRLIFModelFixed(PyLoihiProcessModel):
 		# The `ds_offset` constant enables setting decay constant values to exact 4096 = 2**12. 
 		# Without it, the range of 12-bit unsigned decay_u and dv is 0 to 4095.
 		self.ds_offset = 1
-		self.isthrscaled = False
 		self.effective_bias = 0
 		# State variables j and v are 24 bits wide
 		self.jv_bitwidth = 24
 		self.max_jv_val = 2 ** (self.jv_bitwidth - 1)
-		# Decays need an MSB alignment by 12 bits
-		# --> already done by Brian2Lava!
+		# MSB alignment of decays by 12 bits
+        # --> decay constants are accordingly prepared by Brian2Lava 
 		self.decay_shift = 12
 		self.decay_unity = 2**self.decay_shift
-		# Threshold is MSB-aligned by 6 bits
-		self.theta_unity = 2**6
-        # Incoming activation is MSB-aligned by 6 bits
+        # MSB alignment of incoming activation and voltage parameters by 6 bits
+        # --> constants are accordingly prepared by Brian2Lava 
 		self.act_unity = 2**6
 
 	
@@ -240,17 +238,6 @@ class PyATRLIFModelFixed(PyLoihiProcessModel):
 		#print(f"scale_bias():\n\tbias_mant = {self.bias_mant}\n\tbias_exp = {self.bias_exp}\n\teffective_bias = {self.effective_bias}")
 
 	
-	def scale_threshold(self):
-		"""
-		Scale threshold according to the way Loihi hardware scales it. In Loihi hardware,
-		threshold is left-shifted by 6-bits to MSB-align it with other state variables of higher precision.
-		"""
-		self.theta_0 = np.int32(self.theta_0 * self.theta_unity) # multiplication equaling left shift
-		self.theta = np.full(self.theta.shape, self.theta_0)
-		self.theta_step = np.int32(self.theta_step * self.theta_unity) # multiplication equaling left shift
-		self.isthrscaled = True
-
-	
 	def post_spike(self, spike_vector: np.ndarray):
 		"""
 		Post spike/refractory behavior:
@@ -277,11 +264,6 @@ class PyATRLIFModelFixed(PyLoihiProcessModel):
 
 		# Compute effective bias
 		self.scale_bias()
-
-		# Compute scaled threshold-related variables only once, not every time-step
-		# (has to be done once after object construction)
-		if not self.isthrscaled:
-			self.scale_threshold()		
 
 		self.subthr_dynamics(activation_in=a_in_data)
 		self.s[:] = (self.v - self.r) >= self.theta

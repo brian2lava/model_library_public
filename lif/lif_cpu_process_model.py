@@ -84,7 +84,6 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         # 12-bit unsigned delta_j and delta_v is 0 to 4095.
         self.ds_offset = 0 #1 # TODO fix? this has been causing problems
         self.dm_offset = 0
-        self.parameters_scaled = False
         self.effective_bias = 0
         # Let's define some bit-widths from Loihi
         # State variables j and v are 24-bits wide
@@ -95,7 +94,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         self.decay_shift = 12
         self.decay_unity = 2**self.decay_shift
         # MSB alignment of incoming activation and voltage parameters by 6 bits
-        # --> input values & constants are accordingly prepared by Brian2Lava 
+        # --> constants are accordingly prepared by Brian2Lava 
         self.act_unity = 2**6
 
     def scale_bias(self):
@@ -109,13 +108,6 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
             self.bias_exp >= 0,
             np.left_shift(bias_mant, self.bias_exp),
             np.right_shift(bias_mant, -self.bias_exp),
-        )
-
-    def scale_parameters(self):
-        """Placeholder method for scaling paraneters (threshold, reset potential, ...)."""
-        raise NotImplementedError(
-            "scale_parameters() cannot be called from "
-            "an abstract ProcessModel"
         )
 
     def reset_voltage(self):
@@ -191,11 +183,6 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         # Compute effective bias
         self.scale_bias()
 
-        # Compute scaled threshold-related variables only once, not every timestep
-        # (has to be done after object construction)
-        if not self.parameters_scaled:
-            self.scale_parameters()
-
         self.subthr_dynamics(activation_in=a_in_data)
         self.s_out_buff = self.spiking_activation()
         self.reset_voltage(spike_vector=self.s_out_buff)
@@ -255,25 +242,14 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
 
     def __init__(self, proc_params):
         super(PyLifModelBitAcc, self).__init__(proc_params)
-        self.effective_v_th = 0
-        self.effective_v_rs = 0
         self.logger = get_logger('brian2.devices.lava')
         self.logger.debug(f"Process '{proc_params._parameters['name']}' initialized with PyLifModelBitAcc process model")
 
-    def scale_parameters(self):
-        """Scale threshold and reset potential to fit the way Loihi hardware would scale it. In
-        Loihi hardware, threshold is left-shifted by 6-bits to MSB-align it with other state variables 
-        of higher precision.
-        """
-        self.effective_v_th = np.int32(self.v_th * self.act_unity) # multiplication equaling left shift
-        self.effective_v_rs = np.int32(self.v_rs * self.act_unity) # multiplication equaling left shift
-        self.parameters_scaled = True
-
     def spiking_activation(self):
         """Spike when voltage exceeds threshold."""
-        return self.v > self.effective_v_th
+        return self.v > self.v_th
 
     def reset_voltage(self, spike_vector: np.ndarray):
         """Voltage reset behavior.
         """
-        self.v[spike_vector] = self.effective_v_rs
+        self.v[spike_vector] = self.v_rs
