@@ -6,7 +6,7 @@ A dictionary containing lambda functions to perform the variable-wise scaling
 for F2F conversion of the LIF model. A more meaningful table of the forward scalings:
 
     v       ->  A * v               = v'
-    j       ->  A/alpha_t * j       = j'
+    v_psp   ->  A/alpha_t * v_psp   = v_psp'
     w       ->  A/alpha_t * w    = w'
     bias    ->  A/alpha_t * bias    = bias'
     dt      ->  alpha_t * dt        = dt'
@@ -15,7 +15,7 @@ for F2F conversion of the LIF model. A more meaningful table of the forward scal
     values to be > 1:
 
     min_alpha_t = 1/dt
-    min_A = max(1/v, alpha_t/j, alpha_t/w, alpha_t/b)
+    min_A = max(1/v, alpha_t/v_psp, alpha_t/w, alpha_t/b)
 
 Note: All the lambda functions must have the same number of arguments (all the parameters required in the scaling)
 """
@@ -27,16 +27,18 @@ class ModelScaler:
         'v_rs': lambda alpha_t,A: A,
         'v_th': lambda alpha_t,A: A,
         'dt': lambda alpha_t,A: alpha_t,
-        'j': lambda alpha_t,A: A/alpha_t,
+        'v_psp': lambda alpha_t,A: A/alpha_t,
         'w': lambda alpha_t,A: A/alpha_t,
         'bias': lambda alpha_t,A: A/alpha_t,
     }
     # Variables to be MSB-aligned are defined in 'model.json'. To avoid copy-paste mistakes we 
     # define this variable at runtime using the instance from the F2F converter.
-    msb_align_act = None 
+    msb_align_act = None
+    msb_align_decay = None
+    msb_align_prob = None
     # It's useful to differentiate variables and constants
     # since they are treated differently by Loihi
-    variables = {'v','j'}
+    variables = {'v','v_psp'}
     const = None
     mant_exp = {'bias', 'w'}
     
@@ -56,7 +58,7 @@ class ModelScaler:
         integer range. This is model specific.
         """
         # take the min of each variable
-        dt,v,j,b = variables['dt'][0],variables['v'][0],variables['j'][0],variables['bias'][0]
+        dt,v,v_psp,b = variables['dt'][0],variables['v'][0],variables['v_psp'][0],variables['bias'][0]
         # If this neuron doesn't have any synapses connected to it, w won't be defined.
         w = variables['w'][0] if 'w' in variables else 0
         min_alpha_t = 1/dt
@@ -64,8 +66,8 @@ class ModelScaler:
         params_to_max = []
         if v != 0:
             params_to_max.append(1/v)
-        if j != 0:
-            params_to_max.append(min_alpha_t/j)
+        if v_psp != 0:
+            params_to_max.append(min_alpha_t/v_psp)
         if w != 0:
             params_to_max.append(min_alpha_t/w)
         if b != 0:
@@ -105,10 +107,14 @@ class ModelScaler:
             # here.
             if var_name in ModelScaler.msb_align_act:
                 max_val = max_val * 2**LOIHI2_SPECS.MSB_Alignment_Act
+            elif var_name in ModelScaler.msb_align_decay:
+                max_val = max_val * 2**LOIHI2_SPECS.MSB_Alignment_Decay
+            elif var_name in ModelScaler.msb_align_prob:
+                max_val = max_val * 2**LOIHI2_SPECS.MSB_Alignment_Prob
                 
             if var_name in ['v','v_th','v_rs']:
                 max_A = (max_val-1)/var_max
-            elif var_name in ['j','bias']:
+            elif var_name in ['v_psp','bias']:
                 max_A = (max_val-1)*alpha_t/var_max
             elif var_name == 'w':
                 max_A = (max_val-1)*alpha_t/var_max

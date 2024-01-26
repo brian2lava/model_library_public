@@ -42,7 +42,9 @@ class ModelScaler:
     }
     # Variables to be MSB-aligned are defined in 'model.json'. To avoid copy-paste mistakes we 
     # define this variable at runtime using the instance from the F2F converter.
-    msb_align_act = None 
+    msb_align_act = None
+    msb_align_decay = None
+    msb_align_prob = None
     variables = {'v','j','theta','r'}
     const = None
     mant_exp = {'bias','w'}
@@ -118,6 +120,10 @@ class ModelScaler:
             # here.
             if var_name in ModelScaler.msb_align_act:
                 max_val = max_val * 2**LOIHI2_SPECS.MSB_Alignment_Act
+            elif var_name in ModelScaler.msb_align_decay:
+                max_val = max_val * 2**LOIHI2_SPECS.MSB_Alignment_Decay
+            elif var_name in ModelScaler.msb_align_prob:
+                max_val = max_val * 2**LOIHI2_SPECS.MSB_Alignment_Prob
                 
             if var_name == 'v':
                 max_A = (max_val-1)/var_max
