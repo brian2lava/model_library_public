@@ -31,18 +31,20 @@ class ModelScaler:
         'w': lambda alpha_t,A: A/alpha_t,
         'bias': lambda alpha_t,A: A/alpha_t,
     }
+    # Variables to be MSB-aligned are defined in 'model.json'. To avoid copy-paste mistakes we 
+    # define this variable at runtime using the instance from the F2F converter.
+    msb_align_act = None 
     # It's useful to differentiate variables and constants
     # since they are treated differently by Loihi
     variables = {'v','j'}
-    MSB = None
     const = None
     mant_exp = {'bias', 'w'}
     
     @staticmethod
-    def max_val(varname):
-        if varname in ModelScaler.variables:
+    def max_val(var_name):
+        if var_name in ModelScaler.variables:
             return LOIHI2_SPECS.Max_Variables
-        elif varname in ModelScaler.const:
+        elif var_name in ModelScaler.const:
             return LOIHI2_SPECS.Max_Constants
         else:
             return LOIHI2_SPECS.Max_Weights
@@ -92,23 +94,23 @@ class ModelScaler:
         from numpy import infty
         alpha_t = 1/variables.pop['dt'][0]
         overall_max_A, max_A = infty, infty
-        for varname, (var_min,var_max) in variables.items():
+        for var_name, (var_min,var_max) in variables.items():
             # Avoid zero values
             if var_max == 0:
                 continue
-            max_val = ModelScaler.max_val(varname) 
+            max_val = ModelScaler.max_val(var_name) 
             
             # Account for the fact that some variables are represented with smaller bit-ranges.
             # Since we're interested in their true value after the alignment, we account for the implied shift
             # here.
-            if varname in ModelScaler.MSB:
+            if var_name in ModelScaler.msb_align_act:
                 max_val = max_val * 2**LOIHI2_SPECS.MSB_Alignment_Act
                 
-            if varname in ['v','v_th','v_rs']:
+            if var_name in ['v','v_th','v_rs']:
                 max_A = (max_val-1)/var_max
-            elif varname in ['j','bias']:
+            elif var_name in ['j','bias']:
                 max_A = (max_val-1)*alpha_t/var_max
-            elif varname == 'w':
+            elif var_name == 'w':
                 max_A = (max_val-1)*alpha_t/var_max
                 
             overall_max_A = min(max_A,overall_max_A)
