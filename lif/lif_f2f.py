@@ -104,7 +104,7 @@ class ModelScaler:
             # Since we're interested in their true value after the alignment, we account for the implied shift
             # here.
             if varname in ModelScaler.MSB:
-                max_val = max_val * 2**LOIHI2_SPECS.MSB_Alignment
+                max_val = max_val * 2**LOIHI2_SPECS.MSB_Alignment_Act
                 
             if varname in ['v','v_th','v_rs']:
                 max_A = (max_val-1)/var_max
