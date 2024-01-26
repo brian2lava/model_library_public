@@ -96,12 +96,9 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         self.bitwidth = 24
         self.max_val = 2 ** (self.bitwidth - 1)
         # MSB alignment of decays by 12 bits
-        # --> decay constants are accordingly prepared by Brian2Lava 
+        # --> decay constants are accordingly prepared by Brian2Lava already
         self.decay_shift = 12
         self.decay_unity = 2**self.decay_shift
-        # MSB alignment of incoming activation and voltage parameters by 6 bits
-        # --> constants are accordingly prepared by Brian2Lava 
-        self.act_unity = 2**6
 
     def scale_bias(self):
         """Scale bias with bias exponent by taking into account sign of the
@@ -146,8 +143,6 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         v_psp_decayed = np.sign(v_psp_decayed) * np.right_shift(
         	np.abs(v_psp_decayed), self.decay_shift
         )
-        # Hardware left-shifts synaptic input for MSB alignment
-        activation_in = activation_in * self.act_unity
         # Add synaptic input to decayed postsynaptic potential
         v_psp_updated = np.int32(v_psp_decayed + activation_in)
         # Check if value of postsynaptic potential is within bounds of 24-bit. Overflows are

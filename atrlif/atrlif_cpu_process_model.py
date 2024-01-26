@@ -120,12 +120,9 @@ class PyATRLIFModelFixed(PyLoihiProcessModel):
 		self.jv_bitwidth = 24
 		self.max_jv_val = 2 ** (self.jv_bitwidth - 1)
 		# MSB alignment of decays by 12 bits
-        # --> decay constants are accordingly prepared by Brian2Lava 
+        # --> decay constants are accordingly prepared by Brian2Lava already 
 		self.decay_shift = 12
 		self.decay_unity = 2**self.decay_shift
-        # MSB alignment of incoming activation and voltage parameters by 6 bits
-        # --> constants are accordingly prepared by Brian2Lava 
-		self.act_unity = 2**6
 
 	
 	def subthr_dynamics(self, activation_in: np.ndarray):
@@ -150,9 +147,6 @@ class PyATRLIFModelFixed(PyLoihiProcessModel):
 		j_decayed = np.sign(j_decayed) * np.right_shift(
 			np.abs(j_decayed), self.decay_shift
 		)
-		# Hardware left-shifts synaptic input for MSB alignment
-		activation_in = activation_in * self.act_unity # multiplication by 'act_unity' is like a left shift (cf. line below)
-		#activation_in = np.left_shift(activation_in, act_shift)
 
 		# Add synaptic input to decayed current
 		j_updated = np.int32(j_decayed + activation_in)
