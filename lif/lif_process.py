@@ -107,8 +107,7 @@ class LIF(AbstractLIF):
         dt: ty.Optional[float] = 0,
         name: ty.Optional[str] = None,
         log_config: ty.Optional[LogConfig] = None,
-        **kwargs,
-    ) -> None:
+        **kwargs) -> None:
         super().__init__(
             shape=shape,
             j=j,
@@ -119,8 +118,7 @@ class LIF(AbstractLIF):
             bias_exp=bias_exp,
             name=name,
             log_config=log_config,
-            **kwargs,
-        )
+            **kwargs)
         # Set threshold and reset voltage
         self.v_th = Var(shape=(1,), init=v_th)
         self.v_rs = Var(shape=(1,), init=v_rs)

@@ -98,8 +98,8 @@ class ATRLIF(AbstractProcess):
 			bias_mant: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
 			bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
 			name: ty.Optional[str] = None,
-			log_config: ty.Optional[LogConfig] = None
-		) -> None:
+			log_config: ty.Optional[LogConfig] = None,
+            **kwargs) -> None:
 
 		super().__init__(
 			shape=shape,
@@ -117,8 +117,8 @@ class ATRLIF(AbstractProcess):
 			bias_mant=bias_mant,
 			bias_exp=bias_exp,
 			name=name,
-			log_config=log_config
-		)
+			log_config=log_config,
+            **kwargs)
 
 		# Ports
 		self.a_in = InPort(shape=shape)

@@ -26,7 +26,9 @@
 		{ "name": "w", "description": "synaptic weight", "unit": "V/s" }
 
 	],
-	"MSB" : ["v_rs","v_th","w"],
+	"msb_align_act" : ["v_rs","v_th","w"],
+	"msb_align_decay" : ["delta_j", "delta_v"],
+	"msb_align_prob" : [ ],
 	"process_name": "LIF",
 	"ucode_extensions": {"file": ".dasm", "template": "----"}
 }

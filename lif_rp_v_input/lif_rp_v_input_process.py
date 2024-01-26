@@ -115,8 +115,7 @@ class LIF_rp_v_input(AbstractLIF):
         dt: ty.Optional[float] = 0,
         name: ty.Optional[str] = None,
         log_config: ty.Optional[LogConfig] = None,
-        **kwargs,
-    ) -> None:
+        **kwargs) -> None:
         super().__init__(
             shape=shape,
             v_psp=v_psp,

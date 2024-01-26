@@ -15,7 +15,9 @@
 	"parameters": [
 		{ "name": "p_spike", "description": "probability of a spike in one timestep", "unit": "1" }
 	],
+	"msb_align_act" : [ ],
+	"msb_align_decay" : [ ],
+	"msb_align_prob" : ["p_spike"],
 	"process_name": "ProbSpiker",
-	"MSB" : ["p_spike"],
 	"ucode_extensions": {"file": ".dasm", "template": "----"}
 }

@@ -34,10 +34,12 @@ class ProbSpiker(AbstractProcess):
                  p_spike: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
                  name: ty.Optional[str] = None,
                  dt: ty.Optional[float] = 0,
-                 log_config: ty.Optional[LogConfig] = None) -> None:
+                 log_config: ty.Optional[LogConfig] = None,
+                 **kwargs) -> None:
         super().__init__(shape=shape, 
                          name=name, 
-                         log_config=log_config)
+                         log_config=log_config,
+                         **kwargs)
         self.logger = get_logger('brian2.devices.lava')
         self.s_out = OutPort(shape=shape)
         self.rnd = Var(shape=shape, init=rnd)
