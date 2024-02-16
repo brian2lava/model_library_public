@@ -53,12 +53,13 @@ class PyProbSpikerModelFixed(PyLoihiProcessModel):
 
         # MSB alignment of random numbers by 24 bits
         # --> probability is accordingly prepared by Brian2Lava 
-        self.random_unity = 2**24
+        self.random_unity = 2**23 #2**24
 
     def spiking_activation(self):
         """Spiking activation function."""
-        self.rnd = np.random.randint(0, self.random_unity+1, size=self.shape[0])
+        self.rnd = np.random.randint(0, self.random_unity, size=self.shape[0])
         return self.rnd < self.p_spike
+        #return np.ones(self.shape[0], dtype=bool) # spiking all the time
 
     def run_spk(self):
         """The run function that performs the actual computation."""

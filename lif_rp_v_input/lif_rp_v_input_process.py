@@ -112,6 +112,7 @@ class LIF_rp_v_input(AbstractLIF):
         v_th: ty.Optional[float] = 100,
         v_rs: ty.Optional[float] = 0,
         t_rp_steps: ty.Optional[int] = 1,
+        t_rp_steps_end: ty.Optional[ty.Union[float, list, np.ndarray]] = -1,
         dt: ty.Optional[float] = 0,
         name: ty.Optional[str] = None,
         log_config: ty.Optional[LogConfig] = None,

@@ -10,10 +10,10 @@
 		"\\mathrm{threshold} : \\mathrm{rnd} < p_\\mathrm{spike}"
 	],
 	"variables": [
-		{ "name": "rnd", "description": "multivariate random variable to determine spiking", "unit": "1" }
+		{ "name": "rnd", "description": "multivariate random variable to determine spiking", "unit": "1" },
+		{ "name": "p_spike", "description": "probability of a spike in one timestep", "unit": "1" }
 	],
 	"parameters": [
-		{ "name": "p_spike", "description": "probability of a spike in one timestep", "unit": "1" }
 	],
 	"msb_align_act" : [ ],
 	"msb_align_decay" : [ ],
