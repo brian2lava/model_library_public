@@ -27,7 +27,7 @@
 		{ "name": "w", "description": "synaptic weight", "unit": "V" }
 
 	],
-	"msb_align_act" : ["v_rs","v_th"],
+	"msb_align_act" : [],
 	"msb_align_decay" : ["delta_psp", "delta_v"],
 	"msb_align_prob" : [ ],
 	"process_name": "LIF_rp_v_input",

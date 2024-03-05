@@ -39,7 +39,7 @@
 		
 
 	],
-	"msb_align_act" : ["theta_0","theta_step"],
+	"msb_align_act" : [],
 	"msb_align_decay" : ["delta_j", "delta_v", "delta_theta", "delta_r"],
 	"msb_align_prob" : [ ],
 	"process_name": "ATRLIF",
