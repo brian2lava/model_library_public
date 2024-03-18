@@ -94,7 +94,7 @@ class ModelScaler:
         (The other parameters would have to be at least factor of 1/dt larger than vth)
         """
         from numpy import infty
-        alpha_t = 1/variables.pop['dt'][0]
+        alpha_t = 1/variables['dt'][0]
         overall_max_A, max_A = infty, infty
         for var_name, (var_min,var_max) in variables.items():
             # Avoid zero values
