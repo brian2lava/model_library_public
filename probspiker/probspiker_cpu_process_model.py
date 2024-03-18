@@ -53,7 +53,7 @@ class PyProbSpikerModelFixed(PyLoihiProcessModel):
 
         # MSB alignment of random numbers by 24 bits
         # --> probability is accordingly prepared by Brian2Lava 
-        self.random_unity = 2**24
+        self.random_unity = 2**23 #2**24
 
     def spiking_activation(self):
         """Spiking activation function."""

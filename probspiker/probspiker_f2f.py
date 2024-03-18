@@ -8,7 +8,7 @@ the F2F will just act as the identity operator.
 """
 from brian2lava.utils.const import LOIHI2_SPECS
 class ModelScaler:
-    process_class = 'LIF'
+    process_class = 'ProbSpiker'
     forward_ops = {
         'p_spike' : lambda alpha_t,A: A,
         'rnd' : lambda alpha_t,A: A,
