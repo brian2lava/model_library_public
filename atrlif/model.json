@@ -39,9 +39,7 @@
 		
 
 	],
-	"msb_align_act" : [],
-	"msb_align_decay" : ["delta_j", "delta_v", "delta_theta", "delta_r"],
-	"msb_align_prob" : [ ],
+	"f2f_exceptions" : ["delta_j", "delta_v", "delta_theta", "delta_r"],
 	"process_name": "ATRLIF",
 	"ucode_extensions": {"file": ".dasm", "template": "----"}
 }

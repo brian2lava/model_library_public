@@ -15,9 +15,7 @@
 	],
 	"parameters": [
 	],
-	"msb_align_act" : [ ],
-	"msb_align_decay" : [ ],
-	"msb_align_prob" : ["p_spike"],
+	"f2f_exceptions" : ["rnd", "p_spike"],
 	"process_name": "ProbSpiker",
 	"ucode_extensions": {"file": ".dasm", "template": "----"}
 }
