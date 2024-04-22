@@ -1,7 +1,7 @@
 {
 	"ode": [
 		"dj/dt = -j/tau_j : volt/second",
-		"dv/dt = -v/tau_v + j + bias : volt (unless refractory)"
+		"dv/dt = -v/tau_v + j + bias : volt"
 	],
 	"conditions": {
 		"th" : "v > v_th",

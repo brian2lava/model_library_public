@@ -14,12 +14,13 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
     """
 
     a_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, float)
-    s_out = None  # This will be an OutPort of different LavaPyTypes
+    s_out = None  # OutPort of different LavaPyTypes
     v_psp: np.ndarray = LavaPyType(np.ndarray, float)
     v: np.ndarray = LavaPyType(np.ndarray, float)
     v_rs: float = LavaPyType(float, float)
     t_rp_steps: int = LavaPyType(int, int)
-    t_rp_steps_end: np.ndarray = LavaPyType(np.ndarray, int) # This indicates until which timestep a neuron is in refractory period
+    t_rp_steps_end: np.ndarray = LavaPyType(np.ndarray, int) # indicates until which timestep a neuron is in refractory period
+    x: np.ndarray = LavaPyType(np.ndarray, float) # needs to be here, for unknown reasons
     bias_mant: np.ndarray = LavaPyType(np.ndarray, float)
     bias_exp: np.ndarray = LavaPyType(np.ndarray, float)
     delta_psp: float = LavaPyType(float, float)
@@ -69,13 +70,14 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
     """
 
     a_in: PyInPort = LavaPyType(PyInPort.VEC_DENSE, np.int16, precision=16)
-    s_out: None  # This will be an OutPort of different LavaPyTypes
+    s_out: None  # OutPort of different LavaPyTypes
     v_psp: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     v: np.ndarray = LavaPyType(np.ndarray, np.int32, precision=24)
     v_rs: int = LavaPyType(int, np.int32, precision=17)
     t_rp_steps: int = LavaPyType(int, int)
-    t_rp_steps_end: np.ndarray = LavaPyType(np.ndarray, int) # This indicates until which timestep a neuron is 
+    t_rp_steps_end: np.ndarray = LavaPyType(np.ndarray, int) # indicates until which timestep a neuron is 
                                                              # in refractory period
+    x: np.ndarray = LavaPyType(np.ndarray, float) # needs to be here, for unknown reasons
     delta_psp: int = LavaPyType(int, np.uint16, precision=12)
     delta_v: int = LavaPyType(int, np.uint16, precision=12)
     bias_mant: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=13)

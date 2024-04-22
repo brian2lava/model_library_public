@@ -112,7 +112,8 @@ class LIF_rp_v_input(AbstractLIF):
         v_th: ty.Optional[float] = 100,
         v_rs: ty.Optional[float] = 0,
         t_rp_steps: ty.Optional[int] = 1,
-        t_rp_steps_end: ty.Optional[ty.Union[float, list, np.ndarray]] = -1,
+        t_rp_steps_end: ty.Optional[ty.Union[int, list, np.ndarray]] = -1,
+        x: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
         dt: ty.Optional[float] = 0,
         name: ty.Optional[str] = None,
         log_config: ty.Optional[LogConfig] = None,
@@ -133,7 +134,8 @@ class LIF_rp_v_input(AbstractLIF):
         self.v_th = Var(shape=(1,), init=v_th)
         self.v_rs = Var(shape=(1,), init=v_rs)
         self.t_rp_steps = Var(shape=(1,), init=t_rp_steps)
-        self.t_rp_steps_end = Var(shape=shape, init=-1)
+        self.t_rp_steps_end = Var(shape=shape, init=t_rp_steps_end)
+        self.x = Var(shape=shape, init=0)
         msg_var_par = f"Initialized attributes in process '{self.name}'"
             
         # Print the values
