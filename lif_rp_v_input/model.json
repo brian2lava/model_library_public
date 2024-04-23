@@ -1,7 +1,8 @@
 {
 	"ode": [
 		"dv_psp/dt = -v_psp/tau_psp : volt",
-		"dv/dt = (-v + v_psp)/tau_v + bias : volt (unless refractory)"
+		"dv/dt = (-v + v_psp)/tau_v + bias : volt (unless refractory)",
+		"bias : volt"
 	],
 	"conditions": {
 		"th" : "v > v_th",
@@ -15,12 +16,12 @@
 	],
 	"variables": [
 		{ "name": "v_psp", "description": "postsynaptic potential", "unit": "V" },
-		{ "name": "v", "description": "voltage", "unit": "V" }
+		{ "name": "v", "description": "voltage", "unit": "V" },
+		{ "name": "bias", "description": "voltage bias input" , "unit": "V"}
 	],
 	"parameters": [
 		{ "name": "tau_psp", "description": "synaptic time constant", "unit": "s" },
 		{ "name": "tau_v", "description": "voltage time constant" , "unit": "s"},
-		{ "name": "bias", "description": "bias current (red.)" , "unit": "V/s"},
 		{ "name": "v_th", "description": "threshold voltage", "unit": "V" },
 		{ "name": "v_rs", "description": "reset voltage", "unit": "V" },
 		{ "name": "t_rp", "description": "refractory period", "unit": "s" },

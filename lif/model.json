@@ -1,7 +1,8 @@
 {
 	"ode": [
 		"dj/dt = -j/tau_j : volt/second",
-		"dv/dt = -v/tau_v + j + bias : volt"
+		"dv/dt = -v/tau_v + j + bias : volt",
+		"bias : volt/second"
 	],
 	"conditions": {
 		"th" : "v > v_th",
@@ -15,12 +16,12 @@
 	],
 	"variables": [
 		{ "name": "j", "description": "current (red.)", "unit": "V/s" },
-		{ "name": "v", "description": "voltage", "unit": "V" }
+		{ "name": "v", "description": "voltage", "unit": "V" },
+		{ "name": "bias", "description": "current bias input (red.)" , "unit": "V/s"}
 	],
 	"parameters": [
 		{ "name": "tau_j", "description": "current time constant", "unit": "s" },
 		{ "name": "tau_v", "description": "voltage time constant" , "unit": "s"},
-		{ "name": "bias", "description": "bias current (red.)" , "unit": "V/s"},
 		{ "name": "v_th", "description": "threshold voltage", "unit": "V" },
 		{ "name": "v_rs", "description": "reset voltage", "unit": "V" },
 		{ "name": "w", "description": "synaptic weight", "unit": "V/s" }

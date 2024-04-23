@@ -4,7 +4,8 @@
 		"p_spike : 1"
 	],
 	"conditions": {
-		"th" : "rnd < p_spike"
+		"th" : "rnd < p_spike",
+		"rs" : ""
 	},
 	"latex": [
 		"\\mathrm{threshold} : \\mathrm{rnd} < p_\\mathrm{spike}"
