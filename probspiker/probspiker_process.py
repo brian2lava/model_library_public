@@ -22,8 +22,6 @@ class ProbSpiker(AbstractProcess):
         specified individually for each neuron.
     name : str
         Name of the current process.
-    dt : float
-        Duration of one timestep.
     log_config : LogConfig
         Configuration options for logging.
     """
@@ -33,7 +31,6 @@ class ProbSpiker(AbstractProcess):
                  rnd: ty.Optional[np.ndarray] = 0,
                  p_spike: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
                  name: ty.Optional[str] = None,
-                 dt: ty.Optional[float] = 0,
                  log_config: ty.Optional[LogConfig] = None,
                  **kwargs) -> None:
         super().__init__(shape=shape, 
@@ -53,6 +50,5 @@ class ProbSpiker(AbstractProcess):
         msg_var_par = f"""{msg_var_par}:
                 shape = {shape}
                 rnd = {self.rnd.init}
-                p_spike = {self.p_spike.init}
-                dt = {dt}"""
+                p_spike = {self.p_spike.init}"""
         self.logger.debug(msg_var_par)

@@ -259,8 +259,13 @@ class PyATRLIFModelFixed(PyLoihiProcessModel):
 		# Compute effective bias
 		self.scale_bias()
 
+		# Compute the subthreshold dynamics
 		self.subthr_dynamics(activation_in=a_in_data)
+
+		# Determine the spiking neurons
 		self.s[:] = (self.v - self.r) >= self.theta
 		self.s_out_buff = self.s
+
+		# Do the post-processing
 		self.post_spike(spike_vector=self.s_out_buff)
 		self.s_out.send(self.s_out_buff)

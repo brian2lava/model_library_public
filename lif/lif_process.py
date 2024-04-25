@@ -104,7 +104,6 @@ class LIF(AbstractLIF):
         bias_exp: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
         v_th: ty.Optional[float] = 100,
         v_rs: ty.Optional[float] = 0,
-        dt: ty.Optional[float] = 0,
         name: ty.Optional[str] = None,
         log_config: ty.Optional[LogConfig] = None,
         **kwargs) -> None:
@@ -133,7 +132,6 @@ class LIF(AbstractLIF):
              delta_v = {self.delta_v.init} (computed from tau_v)
              bias_mant = {self.bias_mant.init}, bias_exp = {self.bias_exp.init}
              v_th = {self.v_th.init}
-             v_rs = {self.v_rs.init}
-             dt = {dt}"""
+             v_rs = {self.v_rs.init}"""
         self.logger.debug(msg_var_par)
         

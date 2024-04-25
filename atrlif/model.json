@@ -2,7 +2,7 @@
 	"ode": [
 		"dj/dt = -j/tau_j : volt/second",
 		"dv/dt = -v/tau_v + j + bias : volt",
-		"dtheta/dt = (theta_0-theta)/tau_theta : volt",
+		"dtheta/dt = (-(theta-theta_0) + theta_0)/tau_theta : volt",
 		"dr/dt = -r/tau_r : volt"
 	
 	],
@@ -15,8 +15,8 @@
 	},
 	"latex": [
 		"\\frac{dj}{dt} = -(j(t) + w\\cdot\\sum_i \\delta(t - t_{\\mathrm{spike},i})) \\cdot \\tau_j^{-1}",
-		"\\frac{dv}{dt} = -v(t) \\cdot \\tau_v^{-1} + j(t)+ \\mathrm{bias}(t)",
-		"\\frac{d\\theta}{dt} = \\theta_0 - \\theta(t) \\cdot \\tau_\\theta^{-1}",
+		"\\frac{dv}{dt} = -v(t) \\cdot \\tau_v^{-1} + j(t) + \\mathrm{bias}(t)",
+		"\\frac{d\\theta}{dt} = (-(\\theta(t)-\\theta_0) + \\theta_0) \\cdot \\tau_\\theta^{-1}",
 		"\\frac{dr}{dt} = -r(t) \\cdot \\tau_r^{-1}",
 		"\\mathrm{threshold} : v(t) - r(t) > \\theta(t)",
 		"\\mathrm{reset} : r(t) \\rightarrow r(t) + 2\\cdot\\theta(t),\\quad\\theta(t) \\rightarrow \\theta(t) + \\theta_\\mathrm{step}"

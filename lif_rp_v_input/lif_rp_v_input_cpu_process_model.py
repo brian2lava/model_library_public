@@ -20,9 +20,9 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
     v_rs: float = LavaPyType(float, float)
     t_rp_steps: int = LavaPyType(int, int)
     t_rp_steps_end: np.ndarray = LavaPyType(np.ndarray, int) # indicates until which timestep a neuron is in refractory period
-    x: np.ndarray = LavaPyType(np.ndarray, float) # needs to be here, for unknown reasons
     bias_mant: np.ndarray = LavaPyType(np.ndarray, float)
     bias_exp: np.ndarray = LavaPyType(np.ndarray, float)
+    bias: np.ndarray = LavaPyType(np.ndarray, float) # needs to be here
     delta_psp: float = LavaPyType(float, float)
     delta_v: float = LavaPyType(float, float)
 
@@ -77,11 +77,11 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
     t_rp_steps: int = LavaPyType(int, int)
     t_rp_steps_end: np.ndarray = LavaPyType(np.ndarray, int) # indicates until which timestep a neuron is 
                                                              # in refractory period
-    x: np.ndarray = LavaPyType(np.ndarray, float) # needs to be here, for unknown reasons
     delta_psp: int = LavaPyType(int, np.uint16, precision=12)
     delta_v: int = LavaPyType(int, np.uint16, precision=12)
     bias_mant: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=13)
     bias_exp: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=3)
+    bias: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=16) # needs to be here
 
     def __init__(self, proc_params):
         super(AbstractPyLifModelFixed, self).__init__(proc_params)
@@ -90,7 +90,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         # for postsynaptic potential and membrane voltage, respectively. They enable setting
         # decay constant values to exact 4096 = 2**12. Without them, the range of
         # 12-bit unsigned delta_psp and delta_v is 0 to 4095.
-        self.ds_offset = 0 #1 # TODO fix? this has been causing problems
+        self.ds_offset = 1
         self.dm_offset = 0
         self.effective_bias = 0
         # Let's define some bit-widths from Loihi

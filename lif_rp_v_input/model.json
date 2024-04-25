@@ -1,7 +1,7 @@
 {
 	"ode": [
 		"dv_psp/dt = -v_psp/tau_psp : volt",
-		"dv/dt = (-v + v_psp)/tau_v + bias : volt (unless refractory)",
+		"dv/dt = (-v + v_psp + bias)/tau_v : volt (unless refractory)",
 		"bias : volt"
 	],
 	"conditions": {
@@ -10,7 +10,7 @@
 	},
 	"latex": [
 		"\\frac{dv_\\mathrm{psp}(t)}{dt} = -(v_\\mathrm{psp}(t) + w\\cdot\\sum_i \\delta(t - t_{\\mathrm{spike},i})) \\cdot \\tau_\\mathrm{psp}^{-1}",
-		"\\frac{dv}{dt} = (-v(t) + v_\\mathrm{psp}(t)) \\cdot \\tau_v^{-1} + \\mathrm{bias}(t)",
+		"\\frac{dv}{dt} = (-v(t) + v_\\mathrm{psp}(t) + \\mathrm{bias}(t)) \\cdot \\tau_v^{-1}",
 		"\\mathrm{threshold} : v(t) > v_\\mathrm{th}",
 		"\\mathrm{reset} : v(t) = v_\\mathrm{rs}"
 	],

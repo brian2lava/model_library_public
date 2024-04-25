@@ -82,7 +82,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         # for current and voltage, respectively. They enable setting decay
         # constant values to exact 4096 = 2**12. Without them, the range of
         # 12-bit unsigned delta_j and delta_v is 0 to 4095.
-        self.ds_offset = 0 #1 # TODO fix? this has been causing problems
+        self.ds_offset = 1
         self.dm_offset = 0
         self.effective_bias = 0
         # Let's define some bit-widths from Loihi
