@@ -44,6 +44,7 @@ class AbstractLIF(AbstractProcess):
         self.s_out = OutPort(shape=shape)
         self.j = Var(shape=shape, init=j)
         self.v = Var(shape=shape, init=v)
+        #self.bias = Var(shape=shape, init=np.int16(bias_mant * 2**bias_exp))
         self.delta_j = Var(shape=(1,), init=delta_j)
         self.delta_v = Var(shape=(1,), init=delta_v)
         self.bias_exp = Var(shape=shape, init=bias_exp)

@@ -59,9 +59,9 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
         a_in_data = self.a_in.recv()
 
         self.subthr_dynamics(activation_in=a_in_data)
-        self.s_out_buff = self.spiking_activation()
-        self.spiking_post_processing(spike_vector=self.s_out_buff)
-        self.s_out.send(self.s_out_buff)
+        s_out_buff = self.spiking_activation()
+        self.spiking_post_processing(spike_vector=s_out_buff)
+        self.s_out.send(s_out_buff)
 
 
 class AbstractPyLifModelFixed(PyLoihiProcessModel):
@@ -195,11 +195,11 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
 
         # Compute subthreshold and spiking dynamics
         self.subthr_dynamics(activation_in=a_in_data)
-        self.s_out_buff = self.spiking_activation()
+        s_out_buff = self.spiking_activation()
 
         # Reset voltage of spiked neurons to 0
-        self.spiking_post_processing(spike_vector=self.s_out_buff)
-        self.s_out.send(self.s_out_buff)
+        self.spiking_post_processing(spike_vector=s_out_buff)
+        self.s_out.send(s_out_buff)
 
 @implements(proc=LIF_rp_v_input, protocol=LoihiProtocol)
 @requires(CPU)

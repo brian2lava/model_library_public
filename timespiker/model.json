@@ -1,0 +1,26 @@
+{
+	"ode": [
+		"x : 1",
+		"t_steps = int(t/dt) : 1",
+		"t_spike_steps : 1"
+	],
+	"conditions": {
+		"th" : "t_steps > t_spike_steps",
+		"rs" : ""
+	},
+	"latex": [
+		"\\mathrm{threshold} : \\mathrm{t_steps} > t_\\mathrm{spike~steps}"
+	],
+	"variables": [
+		{ "name": "x", "description": "dummy state (needed for synapses)", "unit": "1" },
+		{ "name": "t_steps", "description": "current simulation timestep", "unit": "1" },
+		{ "name": "t_spike_steps", "description": "timestep of spiking", "unit": "1" }
+	],
+	"parameters": [
+		{ "name": "t_rp", "description": "refractory period", "unit": "s" }
+	],
+	"msb_align_prob": [],
+	"f2f_exceptions" : ["t_spike_steps"],
+	"process_name": "TimeSpiker",
+	"ucode_extensions": {"file": ".dasm", "template": "----"}
+}
