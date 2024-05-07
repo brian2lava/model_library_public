@@ -1,5 +1,6 @@
 import numpy as np
 import typing as ty
+from datetime import datetime
 from brian2.utils.logger import get_logger
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.ports import PyOutPort
@@ -24,6 +25,10 @@ class PyProbSpikerModelFloat(PyLoihiProcessModel):
         super(PyProbSpikerModelFloat, self).__init__(proc_params)
         self.logger = get_logger('brian2.devices.lava')
         self.logger.debug(f"Process '{proc_params._parameters['name']}' initialized with PyProbSpikerModelFloat process model")
+
+        # Use system time to seed the random number generation
+        # TODO The numpy method shall eventually be replaced by a more suitable one
+        np.random.seed(int(datetime.now().timestamp()*1e6) % 2**32)
 
     def spiking_activation(self):
         """Spiking activation function."""
@@ -51,6 +56,10 @@ class PyProbSpikerModelFixed(PyLoihiProcessModel):
         self.logger = get_logger('brian2.devices.lava')
         self.logger.debug(f"Process '{proc_params._parameters['name']}' initialized with PyProbSpikerModelFixed process model")
 
+        # Use system time to seed the random number generation
+        # TODO The numpy method shall eventually be replaced by a more suitable one
+        np.random.seed(int(datetime.now().timestamp()*1e6) % 2**32)
+        
         # MSB alignment of random numbers by 24 bits
         # --> probability is accordingly prepared by Brian2Lava 
         self.random_unity = 2**24
