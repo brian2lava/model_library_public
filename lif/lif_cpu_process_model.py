@@ -74,6 +74,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
     delta_v: int = LavaPyType(int, np.uint16, precision=12)
     bias_mant: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=13)
     bias_exp: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=3)
+    v_rs: int = LavaPyType(int, np.int32, precision=17)
 
     def __init__(self, proc_params):
         super(AbstractPyLifModelFixed, self).__init__(proc_params)
@@ -127,10 +128,9 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         """
         # Update current
         # --------------
-        # Compute decay constant (left shift via multiplication by `decay_unity`
-        # --> already done by Brian2Lava!)
-        #decay_const_j = self.delta_j*self.decay_unity + self.ds_offset
-        decay_const_j = self.delta_j + self.ds_offset
+        # Compute decay constant. Left shift of `delta_psp` by `log2(decay_unity)`` is
+        # already done by Brian2Lava! Clip to ensure that it doesn't exceed `decay_unity`.
+        decay_const_j = np.clip(self.delta_j + self.ds_offset, 0, self.decay_unity)
         # Below, j is promoted to int64 to avoid overflow of the product
         # between j and decay term beyond int32. Subsequent right shift by
         # 12 brings us back within 24-bits (and hence, within 32-bits)
@@ -143,29 +143,31 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         # Check if value of current is within bounds of 24-bit. Overflows are
         # handled by wrapping around modulo 2 ** 23. E.g., (2 ** 23) + k
         # becomes k and -(2**23 + k) becomes -k
-        wrapped_curr = np.where(
-        	j_updated > self.max_jv_val,
-        	j_updated - 2 * self.max_jv_val,
-        	j_updated,
-        )
-        wrapped_curr = np.where(
-        	wrapped_curr <= -self.max_jv_val,
-        	j_updated + 2 * self.max_jv_val,
-        	wrapped_curr,
-        )
-        self.j[:] = wrapped_curr # TODO rather do clipping?
+        #wrapped_curr = np.where(
+        #	j_updated > self.max_jv_val,
+        #	j_updated - 2 * self.max_jv_val,
+        #	j_updated,
+        #)
+        #wrapped_curr = np.where(
+        #	wrapped_curr <= -self.max_jv_val,
+        #	j_updated + 2 * self.max_jv_val,
+        #	wrapped_curr,
+        #)
+        # --> Instead of wrapping, better do clipping (as for voltage
+        # below)
+        neg_jv_limit = -np.int32(self.max_jv_val) + 1
+        pos_jv_limit = np.int32(self.max_jv_val) - 1
+        self.j[:] = np.clip(j_updated, neg_jv_limit, pos_jv_limit)
 
         # Update voltage (decay similar to current)
         # -----------------------------------------
         decay_const_v = self.delta_v + self.dm_offset
-        neg_voltage_limit = -np.int32(self.max_jv_val) + 1
-        pos_voltage_limit = np.int32(self.max_jv_val) - 1
         v_decayed = np.int64(self.v) * (self.decay_unity - decay_const_v)
         v_decayed = np.sign(v_decayed) * np.right_shift(
         	np.abs(v_decayed), self.decay_shift
         )
         v_updated = np.int32(v_decayed + self.j + self.effective_bias)
-        self.v[:] = np.clip(v_updated, neg_voltage_limit, pos_voltage_limit)
+        self.v[:] = np.clip(v_updated, neg_jv_limit, pos_jv_limit)
 
     def run_spk(self):
         """The run function that performs the actual computation during
@@ -178,8 +180,11 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         # Compute effective bias
         self.scale_bias()
 
+        # Compute subthreshold and spiking dynamics
         self.subthr_dynamics(activation_in=a_in_data)
         s_out_buff = self.spiking_activation()
+
+        # Do post-processing
         self.reset_voltage(spike_vector=s_out_buff)
         self.s_out.send(s_out_buff)
 
@@ -233,7 +238,6 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
 
     s_out: PyOutPort = LavaPyType(PyOutPort.VEC_DENSE, np.int32, precision=24)
     v_th: int = LavaPyType(int, np.int32, precision=17)
-    v_rs: int = LavaPyType(int, np.int32, precision=17)
 
     def __init__(self, proc_params):
         super(PyLifModelBitAcc, self).__init__(proc_params)

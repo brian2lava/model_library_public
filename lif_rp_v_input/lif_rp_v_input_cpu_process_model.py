@@ -38,7 +38,7 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
     def subthr_dynamics(self, activation_in: np.ndarray):
         """Sub-threshold dynamics of postsynaptic potential and membrane voltage.
         """
-        self.v_psp[:] = self.v_psp * (1 - self.delta_psp) + activation_in
+        self.v_psp[:] = (self.v_psp + activation_in) * (1 - self.delta_psp)
 
         non_ref = self.t_rp_steps_end < self.time_step
         self.v[non_ref] = self.v[non_ref] * (1 - self.delta_v) + self.v_psp[non_ref] + self.bias_mant[non_ref]
@@ -134,19 +134,18 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         """
         # Update postsynaptic potential
         # -----------------------------
-        # Compute decay constant (left shift via multiplication by `decay_unity`
-        # --> already done by Brian2Lava!)
-        #decay_const_psp = self.delta_psp*self.decay_unity + self.ds_offset
-        decay_const_psp = self.delta_psp + self.ds_offset
+        # Compute decay constant. Left shift of `delta_psp` by `log2(decay_unity)`` is
+        # already done by Brian2Lava! Clip to ensure that it doesn't exceed `decay_unity`.
+        decay_const_psp = np.clip(self.delta_psp + self.ds_offset, 0, self.decay_unity)
         # Below, v_psp is promoted to int64 to avoid overflow of the product
         # between v_psp and decay term beyond int32. Subsequent right shift by
         # 12 brings us back within 24-bits (and hence, within 32-bits)
-        v_psp_decayed = np.int64(self.v_psp) * (self.decay_unity - decay_const_psp)
+        # Also add synaptic input to decayed postsynaptic potential here
+        v_psp_decayed = np.int64(self.v_psp + activation_in) * (self.decay_unity - decay_const_psp)
         v_psp_decayed = np.sign(v_psp_decayed) * np.right_shift(
         	np.abs(v_psp_decayed), self.decay_shift
         )
-        # Add synaptic input to decayed postsynaptic potential
-        v_psp_updated = np.int32(v_psp_decayed + activation_in)
+        v_psp_updated = np.int32(v_psp_decayed)
         # Check if value of postsynaptic potential is within bounds of 24-bit. Overflows are
         # handled by wrapping around modulo 2 ** 23. E.g., (2 ** 23) + k
         # becomes k and -(2**23 + k) becomes -k
@@ -197,7 +196,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         self.subthr_dynamics(activation_in=a_in_data)
         s_out_buff = self.spiking_activation()
 
-        # Reset voltage of spiked neurons to 0
+        # Do post-processing
         self.spiking_post_processing(spike_vector=s_out_buff)
         self.s_out.send(s_out_buff)
 

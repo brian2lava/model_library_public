@@ -9,7 +9,7 @@
 		"rs" : "v = v_rs"
 	},
 	"latex": [
-		"\\frac{dv_\\mathrm{psp}(t)}{dt} = -(v_\\mathrm{psp}(t) + w\\cdot\\sum_i \\delta(t - t_{\\mathrm{spike},i})) \\cdot \\tau_\\mathrm{psp}^{-1}",
+		"\\frac{dv_\\mathrm{psp}(t)}{dt} = (-v_\\mathrm{psp}(t) + w\\cdot\\sum_i \\delta(t - t_{\\mathrm{spike},i})) \\cdot \\tau_\\mathrm{psp}^{-1}",
 		"\\frac{dv}{dt} = (-v(t) + v_\\mathrm{psp}(t) + \\mathrm{bias}(t)) \\cdot \\tau_v^{-1}",
 		"\\mathrm{threshold} : v(t) > v_\\mathrm{th}",
 		"\\mathrm{reset} : v(t) = v_\\mathrm{rs}"
