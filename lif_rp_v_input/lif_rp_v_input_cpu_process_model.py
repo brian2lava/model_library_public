@@ -22,7 +22,7 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
     t_rp_steps_end: np.ndarray = LavaPyType(np.ndarray, int) # indicates until which timestep a neuron is in refractory period
     bias_mant: np.ndarray = LavaPyType(np.ndarray, float)
     bias_exp: np.ndarray = LavaPyType(np.ndarray, float)
-    bias: np.ndarray = LavaPyType(np.ndarray, float) # needs to be here
+    #bias: np.ndarray = LavaPyType(np.ndarray, float) # preparation for possible readout
     delta_psp: float = LavaPyType(float, float)
     delta_v: float = LavaPyType(float, float)
 
@@ -38,10 +38,11 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
     def subthr_dynamics(self, activation_in: np.ndarray):
         """Sub-threshold dynamics of postsynaptic potential and membrane voltage.
         """
-        self.v_psp[:] = (self.v_psp + activation_in) * (1 - self.delta_psp)
+        self.v_psp[:] = self.v_psp * (1 - self.delta_psp) + activation_in
 
         non_ref = self.t_rp_steps_end < self.time_step
-        self.v[non_ref] = self.v[non_ref] * (1 - self.delta_v) + self.v_psp[non_ref] + self.bias_mant[non_ref]
+        self.v[non_ref] = self.v[non_ref] * (1 - self.delta_v) + \
+                          (self.v_psp[non_ref] + self.bias_mant[non_ref]) * self.delta_v
 
     def spiking_post_processing(self, spike_vector: np.ndarray):
         """Post processing after spiking; including reset of membrane voltage
@@ -81,7 +82,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
     delta_v: int = LavaPyType(int, np.uint16, precision=12)
     bias_mant: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=13)
     bias_exp: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=3)
-    bias: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=16) # needs to be here
+    #bias: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=16) # preparation for possible readout
 
     def __init__(self, proc_params):
         super(AbstractPyLifModelFixed, self).__init__(proc_params)
@@ -89,14 +90,14 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         # added to delta_psp and delta_v variables to compute effective decay constants
         # for postsynaptic potential and membrane voltage, respectively. They enable setting
         # decay constant values to exact 4096 = 2**12. Without them, the range of
-        # 12-bit unsigned delta_psp and delta_v is 0 to 4095.
+        # 12-bit unsigned delta_j and delta_v is 0 to 4095.
         self.ds_offset = 1
         self.dm_offset = 0
         self.effective_bias = 0
         # Let's define some bit-widths from Loihi
         # State variables v_psp and v are 24-bits wide
         self.bitwidth = 24
-        self.max_val = 2 ** (self.bitwidth - 1)
+        self.max_v_val = 2 ** (self.bitwidth - 1)
         # MSB alignment of decays by 12 bits
         # --> decay constants are accordingly prepared by Brian2Lava already
         self.decay_shift = 12
@@ -135,44 +136,53 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         # Update postsynaptic potential
         # -----------------------------
         # Compute decay constant. Left shift of `delta_psp` by `log2(decay_unity)`` is
-        # already done by Brian2Lava! Clip to ensure that it doesn't exceed `decay_unity`.
+        # already done by Brian2Lava! If `ds_offset > 0`, clip to ensure that it doesn't 
+        # exceed `decay_unity`.
         decay_const_psp = np.clip(self.delta_psp + self.ds_offset, 0, self.decay_unity)
+        #decay_const_psp = self.delta_psp
         # Below, v_psp is promoted to int64 to avoid overflow of the product
         # between v_psp and decay term beyond int32. Subsequent right shift by
-        # 12 brings us back within 24-bits (and hence, within 32-bits)
-        # Also add synaptic input to decayed postsynaptic potential here
-        v_psp_decayed = np.int64(self.v_psp + activation_in) * (self.decay_unity - decay_const_psp)
+        # 12 brings us back within 24-bits (and hence, within 32-bits).
+        v_psp_decayed = np.int64(self.v_psp) * (self.decay_unity - decay_const_psp)
         v_psp_decayed = np.sign(v_psp_decayed) * np.right_shift(
         	np.abs(v_psp_decayed), self.decay_shift
         )
-        v_psp_updated = np.int32(v_psp_decayed)
+        # Add synaptic input to decayed postsynaptic potential
+        v_psp_updated = np.int32(v_psp_decayed + activation_in)
         # Check if value of postsynaptic potential is within bounds of 24-bit. Overflows are
         # handled by wrapping around modulo 2 ** 23. E.g., (2 ** 23) + k
         # becomes k and -(2**23 + k) becomes -k
-        wrapped_psp = np.where(
-        	v_psp_updated > self.max_val,
-        	v_psp_updated - 2 * self.max_val,
-        	v_psp_updated,
-        )
-        wrapped_psp = np.where(
-        	wrapped_psp <= -self.max_val,
-        	v_psp_updated + 2 * self.max_val,
-        	wrapped_psp,
-        )
-        self.v_psp[:] = wrapped_psp
-
+        #wrapped_psp = np.where(
+        #	v_psp_updated > self.max_v_val,
+        #	v_psp_updated - 2 * self.max_v_val,
+        #	v_psp_updated,
+        #)
+        #wrapped_psp = np.where(
+        #	wrapped_psp <= -self.max_v_val,
+        #	v_psp_updated + 2 * self.max_v_val,
+        #	wrapped_psp,
+        #)
+        #self.v_psp[:] = wrapped_psp
+        # --> Instead of wrapping, we better do clipping (as for voltage
+        # below)
+        neg_v_limit = -np.int32(self.max_v_val) + 1
+        pos_v_limit = np.int32(self.max_v_val) - 1
+        self.v_psp[:] = np.clip(v_psp_updated, neg_v_limit, pos_v_limit)
+        
         # Update membrane voltage (decay similar to postsynaptic potential)
         # -----------------------------------------------------------------
         decay_const_v = self.delta_v + self.dm_offset
-        neg_voltage_limit = -np.int32(self.max_val) + 1
-        pos_voltage_limit = np.int32(self.max_val) - 1
         v_decayed = np.int64(self.v) * (self.decay_unity - decay_const_v)
         v_decayed = np.sign(v_decayed) * np.right_shift(
         	np.abs(v_decayed), self.decay_shift
         )
-        v_updated = np.int32(v_decayed + self.v_psp + self.effective_bias)
+        v_increase = np.int64(self.v_psp + self.effective_bias) * decay_const_v
+        v_increase = np.sign(v_increase) * np.right_shift(
+        	np.abs(v_increase), self.decay_shift
+        )
+        v_updated = np.int32(v_decayed + v_increase)
         non_ref = self.t_rp_steps_end < self.time_step
-        self.v[non_ref] = np.clip(v_updated[non_ref], neg_voltage_limit, pos_voltage_limit)
+        self.v[non_ref] = np.clip(v_updated[non_ref], neg_v_limit, pos_v_limit)
 
     def spiking_post_processing(self, spike_vector: np.ndarray):
         """Post processing after spiking; including reset of membrane voltage

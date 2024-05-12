@@ -113,7 +113,7 @@ class LIF_rp_v_input(AbstractLIF):
         v_rs: ty.Optional[float] = 0,
         t_rp_steps: ty.Optional[int] = 1,
         t_rp_steps_end: ty.Optional[ty.Union[int, list, np.ndarray]] = -1,
-        bias: ty.Optional[ty.Union[float, list, np.ndarray]] = 0,
+        #bias: ty.Optional[ty.Union[float, list, np.ndarray]] = 0, # preparation for possible readout
         name: ty.Optional[str] = None,
         log_config: ty.Optional[LogConfig] = None,
         **kwargs) -> None:
@@ -134,7 +134,7 @@ class LIF_rp_v_input(AbstractLIF):
         self.v_rs = Var(shape=(1,), init=v_rs)
         self.t_rp_steps = Var(shape=(1,), init=t_rp_steps)
         self.t_rp_steps_end = Var(shape=shape, init=t_rp_steps_end)
-        self.bias = Var(shape=shape, init=0)
+        #self.bias = Var(shape=shape, init=0)
         msg_var_par = f"Initialized attributes in process '{self.name}'"
             
         # Print the values

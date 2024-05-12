@@ -24,6 +24,7 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
     bias_exp: np.ndarray = LavaPyType(np.ndarray, float)
     delta_j: float = LavaPyType(float, float)
     delta_v: float = LavaPyType(float, float)
+    dt: float = LavaPyType(float, float)
 
     def spiking_activation(self):
         """Abstract method to define the activation function that determines
@@ -39,7 +40,9 @@ class AbstractPyLifModelFloat(PyLoihiProcessModel):
         all LIF models. This is where the 'leaky integration' happens.
         """
         self.j[:] = self.j * (1 - self.delta_j) + activation_in
-        self.v[:] = self.v * (1 - self.delta_v) + self.j + self.bias_mant
+        
+        self.v[:] = self.v * (1 - self.delta_v) + \
+                    (self.j + self.bias_mant) * self.dt
 
     def reset_voltage(self, spike_vector: np.ndarray):
         """Voltage reset behaviour. This can differ for different neuron
@@ -75,6 +78,7 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
     bias_mant: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=13)
     bias_exp: np.ndarray = LavaPyType(np.ndarray, np.int16, precision=3)
     v_rs: int = LavaPyType(int, np.int32, precision=17)
+    dt: int = LavaPyType(int, np.uint16)
 
     def __init__(self, proc_params):
         super(AbstractPyLifModelFixed, self).__init__(proc_params)
@@ -128,17 +132,18 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         """
         # Update current
         # --------------
-        # Compute decay constant. Left shift of `delta_psp` by `log2(decay_unity)`` is
-        # already done by Brian2Lava! Clip to ensure that it doesn't exceed `decay_unity`.
+        # Compute decay constant. Left shift of `delta_j` by `log2(decay_unity)`` is
+        # already done by Brian2Lava! If `ds_offset > 0`, clip to ensure that it doesn't 
+        # exceed `decay_unity`.
         decay_const_j = np.clip(self.delta_j + self.ds_offset, 0, self.decay_unity)
         # Below, j is promoted to int64 to avoid overflow of the product
         # between j and decay term beyond int32. Subsequent right shift by
-        # 12 brings us back within 24-bits (and hence, within 32-bits)
-        j_decayed = np.int64(self.j) * (self.decay_unity - decay_const_j)
+        # 12 brings us back within 24-bits (and hence, within 32-bits).
+        j_decayed = np.int64(self.j) * (self.decay_unity - decay_const_j) 
         j_decayed = np.sign(j_decayed) * np.right_shift(
         	np.abs(j_decayed), self.decay_shift
         )
-        # Add synaptic input to decayed current
+        # Add synaptic input to decayed postsynaptic current
         j_updated = np.int32(j_decayed + activation_in)
         # Check if value of current is within bounds of 24-bit. Overflows are
         # handled by wrapping around modulo 2 ** 23. E.g., (2 ** 23) + k
@@ -153,7 +158,8 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         #	j_updated + 2 * self.max_jv_val,
         #	wrapped_curr,
         #)
-        # --> Instead of wrapping, better do clipping (as for voltage
+        #self.j[:] = wrapped_curr
+        # --> Instead of wrapping, we better do clipping (as for voltage
         # below)
         neg_jv_limit = -np.int32(self.max_jv_val) + 1
         pos_jv_limit = np.int32(self.max_jv_val) - 1
@@ -166,8 +172,13 @@ class AbstractPyLifModelFixed(PyLoihiProcessModel):
         v_decayed = np.sign(v_decayed) * np.right_shift(
         	np.abs(v_decayed), self.decay_shift
         )
-        v_updated = np.int32(v_decayed + self.j + self.effective_bias)
+        v_increase = np.int64(self.j + self.effective_bias) * self.dt * self.decay_unity
+        v_increase = np.sign(v_increase) * np.right_shift(
+            np.abs(v_increase), self.decay_shift
+        )
+        v_updated = np.int32(v_decayed + v_increase)
         self.v[:] = np.clip(v_updated, neg_jv_limit, pos_jv_limit)
+
 
     def run_spk(self):
         """The run function that performs the actual computation during
@@ -209,7 +220,7 @@ class PyLifModelFloat(AbstractPyLifModelFloat):
 
     def spiking_activation(self):
         """Spiking activation function for LIF."""
-        return self.v > self.v_th
+        return self.v >= self.v_th
 
 
 @implements(proc=LIF, protocol=LoihiProtocol)
@@ -246,7 +257,7 @@ class PyLifModelBitAcc(AbstractPyLifModelFixed):
 
     def spiking_activation(self):
         """Spike when voltage exceeds threshold."""
-        return self.v > self.v_th
+        return self.v >= self.v_th
 
     def reset_voltage(self, spike_vector: np.ndarray):
         """Voltage reset behavior.
