@@ -1,0 +1,31 @@
+{
+	"ode": [
+		"dv/dt = (-v + bias)/tau_v : volt (unless refractory)",
+		"bias : volt"
+	],
+	"conditions": {
+		"th" : "v > v_th",
+		"rs" : "v = v_rs"
+	},
+	"latex": [
+		"\\frac{dv}{dt} = (-v(t) + w\\cdot\\sum_i \\delta(t - t_{\\mathrm{spike},i}) + \\mathrm{bias}(t)) \\cdot \\tau_v^{-1}",
+		"\\mathrm{threshold} : v(t) > v_\\mathrm{th}",
+		"\\mathrm{reset} : v(t) = v_\\mathrm{rs}"
+	],
+	"variables": [
+		{ "name": "v", "description": "voltage", "unit": "V" },
+		{ "name": "bias", "description": "voltage bias input" , "unit": "V"}
+	],
+	"parameters": [
+		{ "name": "tau_v", "description": "voltage time constant" , "unit": "s"},
+		{ "name": "v_th", "description": "threshold voltage", "unit": "V" },
+		{ "name": "v_rs", "description": "reset voltage", "unit": "V" },
+		{ "name": "t_rp", "description": "refractory period", "unit": "s" },
+		{ "name": "w", "description": "synaptic weight", "unit": "V" }
+
+	],
+	"msb_align_decay":  ["delta_v"],
+	"f2f_exceptions" : ["delta_v"],
+	"process_name": "LIF_rp_delta_v_input",
+	"ucode_extensions": {"file": ".dasm", "template": "----"}
+}

@@ -19,5 +19,6 @@
 	"msb_align_prob": ["p_spike", "rnd"],
 	"f2f_exceptions" : ["rnd", "p_spike"],
 	"process_name": "ProbSpiker",
+	"loihi_2_learning_support": false,
 	"ucode_extensions": {"file": ".dasm", "template": "----"}
 }
