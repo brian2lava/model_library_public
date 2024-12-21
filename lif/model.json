@@ -1,4 +1,6 @@
 {
+	"description": "Leaky Integrate-and-Fire neuron with exponentially decaying current input",
+	"process_name": "LIF",
 	"ode": [
 		"dj/dt = -j/tau_j : volt/second",
 		"dv/dt = -v/tau_v + j + bias : volt",
@@ -27,8 +29,8 @@
 		{ "name": "w", "description": "synaptic weight", "unit": "V/s" }
 
 	],
+	"refractory_period" : "False",
 	"msb_align_decay": ["delta_j", "delta_v"],
 	"f2f_exceptions" : ["delta_j", "delta_v"],
-	"process_name": "LIF",
 	"ucode_extensions": {"file": ".dasm", "template": "----"}
 }

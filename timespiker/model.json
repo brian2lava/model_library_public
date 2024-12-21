@@ -1,4 +1,5 @@
 {
+	"description": "Simple neuron that just spikes after a certain simulation time is exceeded",
 	"ode": [
 		"x : 1",
 		"t_steps = int(t/dt) : 1",
@@ -19,6 +20,7 @@
 	"parameters": [
 		{ "name": "t_rp", "description": "refractory period", "unit": "s" }
 	],
+	"refractory_period" : "True",
 	"msb_align_prob": [],
 	"f2f_exceptions" : ["t_spike_steps"],
 	"process_name": "TimeSpiker",

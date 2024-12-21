@@ -1,4 +1,6 @@
 {
+	"description": "Adaptive-Threshold and -Reset Leaky Integrate-and-Fire neuron",
+	"process_name": "ATRLIF",
 	"ode": [
 		"dj/dt = -j/tau_j : volt/second",
 		"dv/dt = -v/tau_v + j + bias : volt",
@@ -39,8 +41,8 @@
 		
 
 	],
+	"refractory_period" : "False",
 	"msb_align_decay":  ["delta_j", "delta_v", "delta_theta", "delta_r"],
 	"f2f_exceptions" : ["delta_j", "delta_v", "delta_theta", "delta_r"],
-	"process_name": "ATRLIF",
 	"ucode_extensions": {"file": ".dasm", "template": "----"}
 }

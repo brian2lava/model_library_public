@@ -1,8 +1,8 @@
 {
-	"description": "Leaky Integrate-and-Fire neuron with refractory period and delta-shaped voltage input",
-	"process_name": "LIF_rp_delta_v_input",
+	"description": "Leaky Integrate-and-Fire neuron with delta-shaped voltage input",
+	"process_name": "LIF_delta_v_input",
 	"ode": [
-		"dv/dt = (-v + bias)/tau_v : volt (unless refractory)",
+		"dv/dt = (-v + bias)/tau_v : volt",
 		"bias : volt"
 	],
 	"conditions": {
@@ -22,11 +22,10 @@
 		{ "name": "tau_v", "description": "voltage time constant" , "unit": "s"},
 		{ "name": "v_th", "description": "threshold voltage", "unit": "V" },
 		{ "name": "v_rs", "description": "reset voltage", "unit": "V" },
-		{ "name": "t_rp", "description": "refractory period", "unit": "s" },
 		{ "name": "w", "description": "synaptic weight", "unit": "V" }
 
 	],
-	"refractory_period" : "True",
+	"refractory_period" : "False",
 	"msb_align_decay":  ["delta_v"],
 	"f2f_exceptions" : ["delta_v"],
 	"ucode_extensions": {"file": ".dasm", "template": "----"}
