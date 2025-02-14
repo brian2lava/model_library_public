@@ -1,0 +1,36 @@
+{
+	"description": "Leaky Integrate-and-Fire neuron with delta-shaped voltage input, individual neuron time constants, noise, and pre-defined stimulation time course (as used in Golmohammadi et al. 2025)",
+	"process_name": "LIF_predef_stim_versatile",
+	"ode": [
+		"dv/dt = (v_rev - v + bias + sigma_bg*xi)/tau_v_ind : volt",
+		"bias = R*(I_stim_pA(t, i)*pA + I_bg_mean) : volt",
+		"tau_v_ind : second"
+	],
+	"conditions": {
+		"th" : "v > v_th",
+		"rs" : "v = v_rs"
+	},
+	"latex": [
+		"\\frac{dv}{dt} = (-v(t) + w\\cdot\\sum_i \\delta(t - t_{\\mathrm{spike},i}) + \\mathrm{bias}(t) + \\sigma_{bg}\\cdot\\xi(t)) \\cdot \\tau_v^{-1}",
+		"\\mathrm{bias}(t) = R\\cdot(I_{stim}(t) + I_{bg,mean})",
+		"\\mathrm{threshold} : v(t) > v_\\mathrm{th}",
+		"\\mathrm{reset} : v(t) = v_\\mathrm{rs}"
+	],
+	"variables": [
+		{ "name": "v", "description": "voltage", "unit": "V" },
+		{ "name": "bias", "description": "voltage bias input" , "unit": "V"},
+		{ "name": "tau_v_ind", "description": "voltage time constant" , "unit": "s"}
+	],
+	"parameters": [
+		{ "name": "v_th", "description": "threshold voltage", "unit": "V" },
+		{ "name": "v_rs", "description": "reset voltage", "unit": "V" },
+		{ "name": "v_rev", "description": "reversal voltage", "unit": "V" },
+		{ "name": "sigma_bg", "description": "standard deviation of background noise", "unit": "A*s**0.5" },
+		{ "name": "w", "description": "synaptic weight", "unit": "V" }
+
+	],
+	"refractory_period" : "False",
+	"msb_align_decay":  ["delta_v_ind"],
+	"f2f_exceptions" : ["delta_v_ind"],
+	"ucode_extensions": {"file": ".dasm", "template": "----"}
+}
